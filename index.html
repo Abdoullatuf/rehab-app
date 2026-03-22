@@ -358,6 +358,16 @@
         .empty-state { text-align: center; padding: 24px; color: var(--text-light); font-size: 13px; }
         .mt-3 { margin-top: 12px; }
         .success-state { text-align: center; padding: 40px 20px; }
+
+        /* YouTube button */
+        .yt-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #ff0000; color: #fff; border: none; border-radius: 6px;
+            padding: 6px 12px; font-size: 12px; font-weight: 600;
+            cursor: pointer; text-decoration: none; margin-top: 8px;
+        }
+        .yt-btn:hover { background: #cc0000; }
+        [data-theme="dark"] .yt-btn { background: #ff3333; }
     </style>
 </head>
 <body>
@@ -1058,6 +1068,10 @@ function renderProgramme() {
     c.innerHTML = html;
 }
 
+function ytUrl(name) {
+    return "https://www.youtube.com/results?search_query=" + encodeURIComponent("exercice " + name + " comment faire");
+}
+
 function renderExercise(ex, isDone) {
     const stepsHtml = ex.steps.map(s => `<li>${esc(s)}</li>`).join('');
     return `<div class="exercise${isDone?' completed':''}" data-id="${esc(ex.id)}" id="ex-${esc(ex.id)}">
@@ -1075,6 +1089,7 @@ function renderExercise(ex, isDone) {
             <ul class="steps">${stepsHtml}</ul>
             ${ex.warning   ? `<div class="alert-box alert-warning">⚠️ <b>Attention :</b> ${esc(ex.warning)}</div>` : ''}
             ${ex.progression ? `<div class="alert-box alert-info">📈 <b>Progression :</b> ${esc(ex.progression)}</div>` : ''}
+            <a class="yt-btn" href="${ytUrl(ex.name)}" target="_blank" rel="noopener">▶ Voir sur YouTube</a>
         </div>
     </div>`;
 }
@@ -1149,6 +1164,7 @@ function renderSeance() {
                 <p><b>Objectif :</b> ${esc(ex.purpose)}</p>
                 <ul class="steps">${stepsHtml}</ul>
                 ${ex.warning ? `<div class="alert-box alert-warning">⚠️ ${esc(ex.warning)}</div>` : ''}
+                <a class="yt-btn" href="${ytUrl(ex.name)}" target="_blank" rel="noopener">▶ Voir sur YouTube</a>
             </div>
         </div>`;
     }).join('');
