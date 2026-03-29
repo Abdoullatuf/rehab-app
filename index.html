@@ -221,6 +221,37 @@
         [data-theme="dark"] .alert-warning { color: #fbbf24; border-color: #92400e; background: #92400e22; }
         [data-theme="dark"] .alert-info { color: #60a5fa; border-color: #1e40af; background: #1e40af22; }
 
+
+        /* Rotation indicator */
+        .rotation-banner {
+            background: linear-gradient(135deg, #164E63, #0891B2);
+            color: white;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 4px 16px rgba(8,145,178,0.25);
+        }
+        .rotation-badge {
+            font-family: 'Lora', serif;
+            font-size: 28px;
+            font-weight: 900;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            width: 54px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .rotation-info { flex: 1; }
+        .rotation-label { font-size: 10px; opacity: 0.75; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .rotation-title { font-size: 15px; font-weight: 700; margin-top: 2px; }
+        .rotation-sub { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+
         /* Phase selector */
         .phase-btns { display: flex; gap: 8px; flex-wrap: wrap; }
         .phase-btn {
@@ -534,7 +565,7 @@
         <div class="card">
             <div class="card-title">Infos système</div>
             <div class="card-body mt-3">
-                <b>Version :</b> 2.1<br>
+                <b>Version :</b> 3.0 — Force Full Body<br>
                 <b>Stockage :</b> IndexedDB (Dexie)<br>
                 <b>Programmes chargés :</b> <span id="adminProgCount">0</span>
             </div>
@@ -591,6 +622,127 @@
 // PROGRAM DATA (embedded — no external fetch needed)
 // ─────────────────────────────────────────────────────────────────────────────
 const PROGRAMS = [
+    {
+        id: 'force_fullbody',
+        name: 'Force Full Body — Personnalisé',
+        category: 'Force & Performance',
+        description: 'Programme 3 séances/semaine alternées A/B/C | 12 semaines | Bas du dos & droit fémoral intégrés',
+        duration: 12,
+        phases: [
+            {
+                id: 1, name: 'Séance A — Full Body Bas du Corps', weeks: '1–12',
+                description: 'Accent quadriceps, chaîne postérieure et renforcement progressif du bas du dos.',
+                frequency: 'Rotation A → B → C (1 séance sur 3)',
+                rule: 'Douleur max 2/10 sur tous les exercices',
+                exercises: [
+                    { id:'fb1e1', name:'Squat haltères / barre',
+                      meta:'Ph 1–4 : 4×6 | Ph 5–8 : 4×5 | Ph 9–12 : 5×5',
+                      purpose:'Exercice roi du bas du corps : quadriceps, fessiers, chaîne postérieure. Progression charge linéaire.',
+                      steps:["Pieds largeur d'épaules, orteils légèrement ouverts","Haltères à l'épaule ou barre position haute","Inspirer, gainage fort — descendre contrôlé 3 sec jusqu'à parallèle","Genoux dans l'axe des pieds — jamais vers l'intérieur","Pousser fort dans le sol, expirer en remontant"],
+                      progression:'Augmenter de 2,5 kg quand les séries sont maîtrisées (≤ RPE 8).',
+                      warning:'Dos toujours neutre — ne jamais arrondir les lombaires sous charge.' },
+                    { id:'fb1e2', name:'Soulevé de terre roumain',
+                      meta:'3×8 rép | Tempo 3-1-2 | Poids modéré',
+                      purpose:'Renforcer ischio-jambiers, fessiers et érecteurs du rachis. Clé pour le bas du dos sans compression.',
+                      steps:["Debout, haltères ou barre devant les cuisses","Légère flexion des genoux fixe tout au long","Pencher le buste dos plat — hanches poussées vers l'arrière","Descendre jusqu'à mi-tibia en sentant l'étirement des ischios","Remonter en contractant les fessiers et poussant les hanches en avant"],
+                      progression:'Commencer à 50–60 % du max. Augmenter 2,5 kg/semaine si douleur dos = 0/10.',
+                      warning:'Jamais arrondir le bas du dos. Réduire l\'amplitude si gêne lombaire.' },
+                    { id:'fb1e3', name:'Leg press',
+                      meta:'3×10–12 rép | Tempo 3-1-2',
+                      purpose:'Force quadriceps sans charge axiale sur le dos. Idéal pour travailler le droit fémoral droit en sécurité.',
+                      steps:["Assis, pieds à largeur d'épaules sur la plateforme","Descendre contrôlé 3 sec jusqu'à 90° de flexion","Ne jamais verrouiller les genoux en extension","Pousser fort pour remonter — les deux jambes symétriquement","Vérifier que le genou droit ne dévie pas vers l'intérieur"],
+                      progression:'Augmenter de 5–10 kg quand 3 séries sont confortables.' },
+                    { id:'fb1e4', name:'Tirage horizontal câble / haltère',
+                      meta:'4×10 rép | Tempo 2-1-3',
+                      purpose:'Équilibre poussée/tirage. Renforce dos, rhomboïdes et correcteurs posturaux.',
+                      steps:["Saisir la poignée ou l'haltère à hauteur de poitrine","Dos légèrement incliné, gainage actif","Tirer en ramenant les coudes près du corps — épaules basses","Serrer les omoplates 1 sec en fin de mouvement","Revenir lentement 3 sec — bras presque tendus"] },
+                    { id:'fb1e5', name:'Pont fessier unilatéral',
+                      meta:'3×10 rép par jambe | Tempo 2-2-2',
+                      purpose:'Renforcer les fessiers en unilatéral — corrige les déséquilibres D/G et soulage le bas du dos.',
+                      steps:["Allongé sur le dos, un genou fléchi, l'autre jambe tendue vers le plafond","Serrer le fessier porteur et soulever le bassin","Maintenir 2 sec — bassin parfaitement horizontal","Redescendre lentement 2 sec","Compléter toutes les reps d'un côté, puis changer"],
+                      progression:'Ajouter un élastique sur les hanches quand le geste est maîtrisé.' },
+                    { id:'fb1e6', name:'Gainage planche avec variation',
+                      meta:'3×30–45 sec | Repos 30 sec',
+                      purpose:'Stabiliser le tronc et protéger le bas du dos lors des charges lourdes.',
+                      steps:["Appui sur avant-bras, corps parfaitement aligné","Pas de creux dorsal ni de fesses en l'air","Contracter abdos + fessiers + quadriceps simultanément","Respirer régulièrement — ne jamais bloquer","Variation : lever alternativement un bras ou une jambe"],
+                      progression:'Augmenter de 5 sec/semaine ou passer à la planche avec élévation.' }
+                ]
+            },
+            {
+                id: 2, name: 'Séance B — Full Body Haut du Corps', weeks: '1–12',
+                description: 'Accent pectoraux, dos, épaules et bras. Séance équilibrée poussée / tirage.',
+                frequency: 'Rotation A → B → C (1 séance sur 3)',
+                exercises: [
+                    { id:'fb2e1', name:'Développé couché haltères / barre',
+                      meta:'Ph 1–4 : 4×8 | Ph 5–8 : 4×5 | Ph 9–12 : 5×3–5',
+                      purpose:'Développer la force des pectoraux, deltoïdes antérieurs et triceps.',
+                      steps:["Allongé sur banc plat, pieds fermement au sol","Barre ou haltères à hauteur des pectoraux, coudes à 45–75° du buste","Inspirer — descendre contrôlé 3 sec jusqu'à effleurer la poitrine","Pousser explosif en expirant — verrouillage partiel des coudes en haut","Omoplates rétractées et déprimées tout au long"],
+                      progression:'Augmenter de 2,5 kg par semaine si technique parfaite et RPE ≤ 8.' },
+                    { id:'fb2e2', name:'Tractions / Lat pulldown',
+                      meta:'4×6–8 rép',
+                      purpose:'Développer la largeur du dos (grand dorsal). Exercice fondamental de tirage vertical.',
+                      steps:["Saisir la barre en pronation, écart légèrement plus large que les épaules","Partir bras tendus — ne pas tricher avec les épaules","Tirer en amenant les coudes vers les hanches, poitrine vers la barre","Omoplates abaissées et rétractées en bas du mouvement","Revenir lentement 3 sec jusqu'à extension complète"],
+                      progression:'Tractions impossible → lat pulldown → tractions assistées → tractions lestées.' },
+                    { id:'fb2e3', name:'Développé militaire haltères',
+                      meta:'3×8–10 rép | Tempo 2-1-2',
+                      purpose:'Renforcer les deltoïdes et stabiliser les épaules. Améliore la posture et le gainage du buste.',
+                      steps:["Assis ou debout, haltères à hauteur des épaules, paumes vers l'avant","Gainage fort — pousser les haltères au-dessus de la tête","Terminer bras tendus, biceps proches des oreilles","Redescendre contrôlé 2 sec","Jamais cambrer le dos — si cambrure, réduire le poids"],
+                      warning:'Dos neutre impératif. La cambrure lombaire est la cause n°1 de blessure sur cet exercice.' },
+                    { id:'fb2e4', name:'Rowing haltère unilatéral',
+                      meta:'3×10 rép par bras | Tempo 2-1-3',
+                      purpose:'Renforcer le grand dorsal en unilatéral. Corrige les déséquilibres gauche-droite.',
+                      steps:["Un genou et une main sur le banc — buste parallèle au sol","Saisir l'haltère, bras tendu vers le bas","Tirer en ramenant le coude au-dessus du buste (pas vers l'extérieur)","Maintenir 1 sec en haut","Redescendre lentement 3 sec jusqu'à extension complète"] },
+                    { id:'fb2e5', name:'Dips ou Pushdown triceps',
+                      meta:'3×10–12 rép',
+                      purpose:'Isoler les triceps — essentiel pour progresser sur le développé couché.',
+                      steps:["Dips : appui sur barres parallèles, descendre jusqu'à 90° de flexion du coude","Ou Pushdown câble : coudes fixes le long du buste, pousser vers le bas","Contrôler la descente 2 sec","Extension complète en bas — 1 sec de contraction","Revenir lentement"] },
+                    { id:'fb2e6', name:'Curl biceps haltères alternés',
+                      meta:'3×12 rép',
+                      purpose:'Isoler les biceps et renforcer les fléchisseurs du coude.',
+                      steps:["Debout, haltères dans chaque main, paumes vers l'avant","Fléchir un bras en supinant le poignet en haut","Maintenir 1 sec — redescendre lentement 2 sec","Alterner les bras","Coudes fixes contre le corps — ne pas tricher avec les épaules"] }
+                ]
+            },
+            {
+                id: 3, name: 'Séance C — Renforcement Ciblé & Récupération Active', weeks: '1–12',
+                description: 'Renforcement bas du dos + droit fémoral droit + mobilité. Séance complémentaire essentielle.',
+                frequency: 'Rotation A → B → C (1 séance sur 3)',
+                rule: 'Priorité qualité d\'exécution — douleur max 2/10',
+                exercises: [
+                    { id:'fb3e1', name:'Squat bulgare',
+                      meta:'3×8–10 rép par jambe | Tempo 3-1-2',
+                      purpose:'Renforcement intensif du quadriceps (droit fémoral) en position étirée. Corrige les déséquilibres D/G.',
+                      steps:["Pied arrière posé sur un banc (à hauteur de genou environ)","Pied avant stable, à 60–70 cm du banc","Descendre lentement 3 sec — sentir l'étirement à l'avant de la hanche côté arrière","Maintenir 1 sec en bas","Pousser sur le talon du pied avant pour remonter en 2 sec"],
+                      progression:'Sans poids → haltères 2 kg → 4 kg → 6 kg. Progresser lentement côté droit.',
+                      warning:'Commencer par le côté DROIT pour égalité d\'effort. Douleur droit fémoral > 2/10 : arrêter.' },
+                    { id:'fb3e2', name:'Extension genou excentrique — droit fémoral',
+                      meta:'3×10 rép | Descente 4 sec',
+                      purpose:'Renforcement excentrique du droit fémoral droit — méthode la plus efficace pour la prévention tendineuse.',
+                      steps:["Assis sur banc ou machine, pieds ne touchant pas le sol","Tendre les deux jambes simultanément (concentrique assisté)","Descendre UNIQUEMENT avec la jambe droite — très lentement 4 sec","Remonter avec l'aide de la jambe gauche","Répéter — la fatigue du droit fémoral droit doit être progressive"],
+                      progression:'Sem 1–4 : 3×8 sans lest | Sem 5–8 : 3×10 + 0,5 kg | Sem 9–12 : 3×10 + 1–1,5 kg.',
+                      warning:'Exercice prioritaire. Douleur > 3/10 : réduire le lest ou l\'amplitude.' },
+                    { id:'fb3e3', name:'Hip thrust',
+                      meta:'4×12 rép | Pause 2 sec en haut',
+                      purpose:'Activation maximale des fessiers — protège les disques lombaires et renforce la chaîne postérieure.',
+                      steps:["Dos appuyé sur le bord d'un banc, épaules au niveau du bord supérieur","Barre sur les hanches (avec pad/serviette) ou haltère sur le bas du ventre","Pousser les hanches vers le haut — contracter les fessiers au maximum","Maintenir 2 sec en haut — vérifier symétrie D/G","Redescendre lentement 2 sec — ne pas toucher le sol complètement"],
+                      progression:'Commencer poids de corps → barre seule → ajouter 5–10 kg/semaine.' },
+                    { id:'fb3e4', name:'Bird-dog lent',
+                      meta:'3×10 rép par côté | Tempo 3-3-3',
+                      purpose:'Renforcer les stabilisateurs lombaires profonds sans compression — le meilleur exercice pour le bas du dos.',
+                      steps:["À quatre pattes, mains sous les épaules, genoux sous les hanches","Étendre lentement le bras droit et la jambe gauche simultanément (3 sec)","Maintenir 3 sec — dos parfaitement plat, pas de rotation du bassin","Revenir lentement 3 sec au centre","Alterner les côtés avec gainage parfait"],
+                      progression:'Ajouter des lests aux chevilles (0,5–1 kg) quand 3×10 est facile.' },
+                    { id:'fb3e5', name:'Gainage latéral avec rotation',
+                      meta:'3×8 rép par côté',
+                      purpose:'Renforcer les obliques et la stabilité latérale du rachis. Prévient les blessures lombaires.',
+                      steps:["Planche latérale sur avant-bras, corps aligné","Passer le bras libre sous le corps en rotation contrôlée","Revenir en dérotant lentement à la position de départ","Hanches stables et hautes pendant toute la rotation","Alterner les côtés après toutes les reps"] },
+                    { id:'fb3e6', name:'Étirement actif psoas-quadriceps',
+                      meta:'3×30 sec par côté',
+                      purpose:'Libérer les fléchisseurs de hanche — essentiel pour le droit fémoral et le bas du dos.',
+                      steps:["Position chevalier servant (genou droit au sol)","Avancer doucement le bassin vers l'avant","Contracter simultanément abdominaux et fessier du côté genou au sol","Sentir un étirement doux à l'avant de la hanche (jamais douloureux)","Maintenir 30 sec en respirant profondément"],
+                      warning:'Étirement du droit fémoral droit : toujours DOUX. Ne jamais forcer.' }
+                ]
+            }
+        ]
+    },
     {
         id: 'rehab_femoral',
         name: 'Rééducation — Droit Fémoral',
@@ -909,15 +1061,17 @@ const PROGRAMS = [
 // ─────────────────────────────────────────────────────────────────────────────
 const db = new Dexie('RehabV2');
 db.version(1).stores({ settings:'key', progress:'date', pain:'date', sessions:'date' });
+db.version(2).stores({ settings:'key', progress:'date', pain:'date', sessions:'date', loadNotes:'[exId+date]' });
 
 let state = {
-    currentProgram: 'rehab_femoral',
+    currentProgram: 'force_fullbody',
     currentPhase: 1,
     startDate: today(),
     completedExercises: {},
     completedSessions: [],
     painLog: {},
-    darkMode: false
+    darkMode: false,
+    loadNotes: {}
 };
 let prog = null; // active program object
 
@@ -944,6 +1098,11 @@ async function loadState() {
         pain.forEach(r => { state.painLog[r.date] = r.level; });
         const sess = await db.sessions.toArray();
         state.completedSessions = sess.map(r => r.date);
+        const notes = await db.loadNotes.toArray();
+        notes.forEach(r => {
+            if (!state.loadNotes[r.exId]) state.loadNotes[r.exId] = {};
+            state.loadNotes[r.exId][r.date] = r.note;
+        });
     } catch(e) { console.warn('DB load error', e); }
 }
 
@@ -957,6 +1116,14 @@ async function saveState() {
         if (painItems.length) await db.pain.bulkPut(painItems);
         const sessItems = state.completedSessions.map(date => ({ date }));
         if (sessItems.length) await db.sessions.bulkPut(sessItems);
+        // load notes
+        const noteItems = [];
+        Object.entries(state.loadNotes).forEach(([exId, byDate]) => {
+            Object.entries(byDate).forEach(([date, note]) => {
+                if (note) noteItems.push({ exId, date, note });
+            });
+        });
+        if (noteItems.length) await db.loadNotes.bulkPut(noteItems);
     } catch(e) { console.warn('DB save error', e); }
 }
 
@@ -1089,6 +1256,13 @@ function renderExercise(ex, isDone) {
             <ul class="steps">${stepsHtml}</ul>
             ${ex.warning   ? `<div class="alert-box alert-warning">⚠️ <b>Attention :</b> ${esc(ex.warning)}</div>` : ''}
             ${ex.progression ? `<div class="alert-box alert-info">📈 <b>Progression :</b> ${esc(ex.progression)}</div>` : ''}
+            <div class="load-note-block" style="margin-top:12px">
+                <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-light);display:block;margin-bottom:4px">📊 Charge / RPE du jour</label>
+                <input type="text" class="load-input" placeholder="ex: 4×5 @ 80 kg — RPE 7" value="${getLoadNote(ex.id)}"
+                    oninput="saveLoadNote('${esc(ex.id)}', this.value)"
+                    style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+                <div style="font-size:11px;color:var(--text-light);margin-top:4px">Dernière : ${getLastLoadNote(ex.id) || '<em>—</em>'}</div>
+            </div>
             <a class="yt-btn" href="${ytUrl(ex.name)}" target="_blank" rel="noopener">▶ Voir sur YouTube</a>
         </div>
     </div>`;
@@ -1170,6 +1344,7 @@ function renderSeance() {
     }).join('');
     $('seanceExercises').innerHTML = exHtml || '<div class="empty-state">Aucun exercice pour cette phase</div>';
     checkPhaseComplete();
+    renderRotationBanner();
 }
 
 function seanceDone2(id) {
@@ -1463,6 +1638,74 @@ function resetAll() {
     if (confirm('⚠️ Réinitialiser TOUTES les données ? Cette action est irréversible.')) {
         db.delete().then(() => location.reload());
     }
+}
+
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SESSION ROTATION (A/B/C)
+// ─────────────────────────────────────────────────────────────────────────────
+function getNextSession() {
+    if (!prog || prog.phases.length < 2) return null;
+    // Find last completed phase based on completedSessions
+    const lastPhase = state.currentPhase;
+    const phaseLabels = ['A','B','C','D','E'];
+    const nPhases = prog.phases.length;
+    // suggest next session = (currentPhase % nPhases) + 1
+    const nextPhaseId = (lastPhase % nPhases) + 1;
+    const nextPhase = prog.phases.find(p => p.id === nextPhaseId);
+    const currentPhase = prog.phases.find(p => p.id === lastPhase);
+    return {
+        currentLabel: phaseLabels[(lastPhase-1) % phaseLabels.length],
+        nextLabel: phaseLabels[(nextPhaseId-1) % phaseLabels.length],
+        currentName: currentPhase ? currentPhase.name : '',
+        nextName: nextPhase ? nextPhase.name : '',
+        nextId: nextPhaseId
+    };
+}
+
+function renderRotationBanner() {
+    const c = document.getElementById('rotationBanner');
+    if (!c) return;
+    if (!prog || prog.phases.length < 2) { c.style.display = 'none'; return; }
+    const r = getNextSession();
+    if (!r) { c.style.display = 'none'; return; }
+    c.style.display = 'flex';
+    c.innerHTML = `
+        <div class="rotation-badge">${r.currentLabel}</div>
+        <div class="rotation-info">
+            <div class="rotation-label">Séance en cours</div>
+            <div class="rotation-title">${esc(r.currentName)}</div>
+            <div class="rotation-sub">Prochaine : <b>Séance ${r.nextLabel}</b></div>
+        </div>
+        <button onclick="setPhase(${r.nextId})" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+            → ${r.nextLabel}
+        </button>
+    `;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOAD NOTES
+// ─────────────────────────────────────────────────────────────────────────────
+function saveLoadNote(exId, value) {
+    const t = today();
+    if (!state.loadNotes[exId]) state.loadNotes[exId] = {};
+    state.loadNotes[exId][t] = value;
+    saveState();
+}
+
+function getLoadNote(exId) {
+    const t = today();
+    return (state.loadNotes[exId] && state.loadNotes[exId][t]) || '';
+}
+
+function getLastLoadNote(exId) {
+    if (!state.loadNotes[exId]) return '';
+    const dates = Object.keys(state.loadNotes[exId]).sort().reverse();
+    for (const d of dates) {
+        if (state.loadNotes[exId][d]) return state.loadNotes[exId][d] + ' <span style="color:var(--text-light);font-size:10px">('+d+')</span>';
+    }
+    return '';
 }
 
 // BOOT
