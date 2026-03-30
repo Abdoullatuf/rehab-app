@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
     <meta charset="UTF-8">
@@ -251,88 +251,6 @@
         .rotation-label { font-size: 10px; opacity: 0.75; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
         .rotation-title { font-size: 15px; font-weight: 700; margin-top: 2px; }
         .rotation-sub { font-size: 12px; opacity: 0.8; margin-top: 2px; }
-        .session-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-        .micro-stat {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        }
-        .micro-stat-value {
-            font-size: 22px;
-            font-weight: 800;
-            color: #0891B2;
-        }
-        .micro-stat-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--text-light);
-            margin-top: 4px;
-            letter-spacing: 0.4px;
-        }
-        .week-card { margin-bottom: 14px; }
-        .week-title {
-            font-size: 12px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #0891B2;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-        .week-focus {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        .week-list {
-            margin: 0;
-            padding-left: 18px;
-            color: var(--text-light);
-            font-size: 13px;
-            line-height: 1.6;
-        }
-        .week-list li + li { margin-top: 4px; }
-        .match-toggle {
-            display: flex;
-            gap: 8px;
-            margin: 12px 0;
-        }
-        .match-btn {
-            flex: 1;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: var(--bg);
-            color: var(--text-light);
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .match-btn.active {
-            border-color: #0891B2;
-            background: #0891B222;
-            color: #0891B2;
-        }
-        .metric-grid {
-            display: grid;
-            gap: 12px;
-            margin-top: 10px;
-        }
-        .metric-title {
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--text-light);
-            margin-bottom: 6px;
-        }
 
         /* Phase selector */
         .phase-btns { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -481,6 +399,54 @@
         }
         .yt-btn:hover { background: #cc0000; }
         [data-theme="dark"] .yt-btn { background: #ff3333; }
+
+        /* Series tracker */
+        .series-tracker { margin-top: 12px; }
+        .series-tracker-label {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            color: var(--text-light); display: block; margin-bottom: 8px;
+        }
+        .series-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .series-table th {
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            color: var(--text-light); padding: 4px 4px 6px; text-align: center;
+            letter-spacing: 0.3px;
+        }
+        .series-table th:first-child { text-align: left; width: 36px; }
+        .series-table td { padding: 3px 3px; }
+        .series-table td:first-child {
+            font-size: 12px; font-weight: 800; color: var(--text-light);
+            text-align: center; vertical-align: middle;
+        }
+        .series-input {
+            width: 100%; padding: 7px 6px; border: 1px solid var(--border);
+            border-radius: 6px; background: var(--bg); color: var(--text);
+            font-size: 13px; text-align: center; font-family: 'Raleway', sans-serif;
+            transition: border-color 0.2s;
+        }
+        .series-input:focus { outline: none; border-color: #0891B2; }
+        .series-input::placeholder { color: var(--text-light); opacity: 0.6; font-size: 11px; }
+        .series-input.filled { border-color: #10b98166; background: color-mix(in srgb, #10b981 5%, var(--bg)); }
+        .series-row-remove {
+            background: none; border: none; color: var(--text-light);
+            cursor: pointer; font-size: 16px; padding: 4px; opacity: 0.5;
+            transition: opacity 0.2s, color 0.2s;
+        }
+        .series-row-remove:hover { opacity: 1; color: #dc2626; }
+        .series-add-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: var(--bg); border: 1px dashed var(--border);
+            color: var(--text-light); border-radius: 6px;
+            padding: 6px 12px; font-size: 11px; font-weight: 700;
+            cursor: pointer; margin-top: 6px; transition: all 0.2s;
+        }
+        .series-add-btn:hover { border-color: #0891B2; color: #0891B2; }
+        .series-last-session {
+            font-size: 11px; color: var(--text-light); margin-top: 8px;
+            padding: 8px 10px; background: var(--bg); border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .series-last-session b { color: var(--text); }
     </style>
 </head>
 <body>
@@ -546,7 +512,6 @@
             <div class="phase-btns" id="phaseBtns"></div>
         </div>
         <div id="seanceInfo"></div>
-        <div id="rotationBanner" class="rotation-banner" style="display:none"></div>
         <div id="seanceExercises"></div>
         <div class="success-state" id="seanceDone" style="display:none">
             <div style="font-size:56px;margin-bottom:12px">🎉</div>
@@ -591,13 +556,21 @@
     <div class="tab-pane" id="section-suivi">
         <div class="section-title">Suivi & Progression</div>
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-value" id="statSessions">0</div><div class="stat-label">Seances</div></div>
-            <div class="stat-card"><div class="stat-value" id="statStreak">0</div><div class="stat-label">Streak</div></div>
-            <div class="stat-card"><div class="stat-value" id="statTendon">0</div><div class="stat-label">Tendon</div></div>
-            <div class="stat-card"><div class="stat-value" id="statBack">0</div><div class="stat-label">Dos</div></div>
+            <div class="stat-card"><div class="stat-value" id="statSessions">0</div><div class="stat-label">Séances</div></div>
+            <div class="stat-card"><div class="stat-value" id="statStreak">0</div><div class="stat-label">Jours consécutifs</div></div>
         </div>
 
-        <div class="card" id="sessionMetricsCard"></div>
+        <div class="card">
+            <div class="card-title">Douleur aujourd'hui</div>
+            <div style="font-size:12px;color:var(--text-light);margin:6px 0">Évaluez votre douleur (0 = aucune, 10 = insupportable)</div>
+            <div class="pain-scale" id="painScale">
+                <!-- generated by JS -->
+            </div>
+            <div class="pain-labels" style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-light);margin-top:6px;font-weight:700;text-transform:uppercase">
+                <span>Aucune</span><span>Modérée</span><span>Intense</span>
+            </div>
+            <div id="painFeedback" style="margin-top:10px;font-size:13px;"></div>
+        </div>
 
         <div class="card">
             <div class="card-title">Calendrier du mois</div>
@@ -697,70 +670,6 @@
 // PROGRAM DATA (embedded — no external fetch needed)
 // ─────────────────────────────────────────────────────────────────────────────
 const PROGRAMS = [
-    {
-        id: 'football_recomp_2026',
-        name: 'Football Endurance + Recomp',
-        category: 'Performance & Recomposition',
-        description: '3 seances full body par semaine | 8 semaines | droit femoral et bas du dos integres',
-        duration: 8,
-        sessionsPerWeek: 3,
-        disclaimer: true,
-        phases: [
-            {
-                id: 1,
-                name: 'Seance A - full body force technique', weeks: '1-8',
-                description: 'Base force + cardio modere avec progression douce et dos neutre.',
-                frequency: 'Mercredi',
-                rule: 'Douleur acceptable 0 a 2/10. A 3 a 5/10 on reduit. Au-dela de 5/10 on modifie.',
-                exercises: [
-                    { id:'fr26a0', name:'Echauffement A', meta:'10-12 min | avant seance', purpose:'Preparer hanches, tronc et epaules avant les charges.', steps:['5 min de velo tranquille','Mobilite douce hanches, chevilles et epaules','Bird dog 2 x 6 par cote','Dead bug 2 x 6 par cote','2 series legeres du premier exercice'] },
-                    { id:'fr26a1', name:'Presse a cuisses', meta:'4 x 8 | repos 2 min', purpose:'Travailler les quadriceps sans grosse charge axiale sur le dos.', steps:['Regler le siege pour garder le bassin stable','Descendre controle jusqu a une amplitude confortable','Ne pas ecraser le bas du dos en bas du mouvement','Pousser fort sans verrouiller brutalement les genoux'], progression:'Commencer vers 50 kg si propre, puis monter de 2,5 a 5 kg quand les 4 series passent.', warning:'Si douleur dos ou tendon > 3/10, reduire charge ou amplitude.' },
-                    { id:'fr26a2', name:'Developpe couche halteres ou chest press', meta:'4 x 6 a 8 | repos 2 min', purpose:'Construire la force du haut du corps sans fatigue inutile.', steps:['Pieds stables au sol et omoplates serrees','Descendre controle','Pousser fort sans perdre la trajectoire','Garder 1 a 2 reps de marge'], progression:'Rester aux halteres de 16 kg tant que la fourchette haute n est pas propre.', warning:'Arreter avant l echec musculaire.' },
-                    { id:'fr26a3', name:'Rowing assis poulie', meta:'4 x 8 a 10 | repos 90 sec', purpose:'Renforcer le dos et l equilibre poussee / tirage.', steps:['Buste stable et poitrine ouverte','Tirer les coudes vers l arriere','Serrer les omoplates 1 sec','Revenir lentement'], progression:'Ajouter un peu de charge quand 4 x 10 sont propres.' },
-                    { id:'fr26a4', name:'Hip thrust machine ou barre guidee', meta:'3 x 8 a 10 | repos 90 sec', purpose:'Renforcer les fessiers pour proteger le bas du dos.', steps:['Monter le bassin en gardant les cotes rentrees','Marquer 1 a 2 sec en haut','Redescendre sans perdre le controle'], progression:'Monter progressivement si aucune gene lombaire.' },
-                    { id:'fr26a5', name:'Tirage vertical', meta:'3 x 8 a 10 | repos 90 sec', purpose:'Donner du volume au dos et soutenir les tractions.', steps:['Poitrine sortie et epaules basses','Tirer les coudes vers les hanches','Revenir controle en haut'] },
-                    { id:'fr26a6', name:'Pallof press', meta:'3 x 10 par cote | repos 45 sec', purpose:'Stabiliser le tronc sans flexion ni extension agressive.', steps:['Se placer de profil au cable','Pousser les mains devant soi sans tourner','Tenir 1 sec puis revenir'], warning:'Si le dos vrille ou bouge, diminuer la charge.' },
-                    { id:'fr26a7', name:'Cardio zone 2', meta:'12 a 15 min | velo ou elliptique', purpose:'Ameliorer l endurance utile au football sans stress excessif.', steps:['Rester a intensite moderee','Tu dois pouvoir parler en phrases courtes','Sortir de seance plus chaud, pas epuise'] }
-                ]
-            },
-            {
-                id: 2,
-                name: 'Seance B - hypertrophie protegee', weeks: '1-8',
-                description: 'Volume utile, travail unilateral prudent et intervalles controles.',
-                frequency: 'Samedi',
-                rule: 'Les fentes ne passent que si tendon et dos restent calmes le jour meme et le lendemain.',
-                exercises: [
-                    { id:'fr26b0', name:'Echauffement B', meta:'10-12 min | avant seance', purpose:'Preparer les jambes et le tronc a un travail plus volumineux.', steps:['5 min de velo','Montees de genoux douces sans impact','Mobilite de hanches','Planche laterale 2 x 20 sec par cote'] },
-                    { id:'fr26b1', name:'Hack squat ou presse inclinee', meta:'3 x 10 | repos 2 min', purpose:'Monter le volume quadriceps dans un cadre stable.', steps:['Garder le bassin colle au support','Descendre controle','Monter sans a-coup','Ne pas chercher la charge max'], progression:'Ajouter des reps puis un peu de charge quand la technique reste propre.' },
-                    { id:'fr26b2', name:'Developpe incline machine ou halteres', meta:'3 x 8 a 10 | repos 90 sec', purpose:'Volume du haut du corps avec bonne stabilite.', steps:['Appuis solides','Descente controlee','Poussee reguliere','Rester a 1 ou 2 reps de l echec'] },
-                    { id:'fr26b3', name:'Rowing poitrine appuyee', meta:'3 x 10 | repos 90 sec', purpose:'Tirer sans fatigue lombaire excessive.', steps:['Poitrine appuyee au support','Tirer les coudes vers l arriere','Controler le retour'] },
-                    { id:'fr26b4', name:'Leg curl assis ou couche', meta:'3 x 10 a 12 | repos 75 sec', purpose:'Renforcer les ischios pour equilibrer le travail des quadriceps.', steps:['Contracter fort en fin de flexion','Redescendre lentement','Eviter tout mouvement parasite du bassin'] },
-                    { id:'fr26b5', name:'Split squat ou fente arriere legere', meta:'2 a 3 x 8 par jambe | repos 75 sec', purpose:'Stabilite unilaterale et controle de bassin.', steps:['Commencer au poids du corps ou leger','Descendre sans impact','Garder le buste stable','Pousser par le pied avant'], progression:'N augmenter la charge que si aucune gene notable n apparait le lendemain.', warning:'A supprimer si le tendon ou le dos reagit.' },
-                    { id:'fr26b6', name:'Elevations laterales', meta:'3 x 12 a 15 | repos 45 sec', purpose:'Volume deltoides sans fatigue systemique importante.', steps:['Monter les bras jusqu a la ligne des epaules','Controler la descente','Ne pas hausser les epaules'] },
-                    { id:'fr26b7', name:'Planche laterale', meta:'3 x 20 a 30 sec par cote', purpose:'Stabilite laterale du tronc et protection lombaire.', steps:['Aligner tete, bassin et chevilles','Garder les hanches hautes','Respirer normalement'] },
-                    { id:'fr26b8', name:'Intervalles controles', meta:'8 x 30 sec modere/rapide + 60 sec facile', purpose:'Travailler le cardio football sans faire de sprint maximal.', steps:['Faire les repetitions au velo','Rester propre techniquement','Ne pas transformer cela en sprint max'] }
-                ]
-            },
-            {
-                id: 3,
-                name: 'Seance C - endurance musculaire', weeks: '1-8',
-                description: 'Capacite de travail, volume controle et cardio de fin de seance.',
-                frequency: 'Dimanche',
-                rule: 'Toujours garder 2 repetitions de marge sur les pompes et les tirages.',
-                exercises: [
-                    { id:'fr26c0', name:'Echauffement C', meta:'10-12 min | avant seance', purpose:'Preparer une seance orientee endurance musculaire.', steps:['5 min de rameur leger ou velo','Dead bug 2 x 6','Bird dog 2 x 6','Squat poids du corps 2 x 8'] },
-                    { id:'fr26c1', name:'Goblet squat ou presse legere', meta:'3 x 12 | repos 90 sec', purpose:'Volume quadriceps en restant loin des charges lourdes.', steps:['Tenir l haltere contre la poitrine ou choisir une presse legere','Descendre avec controle','Monter sans perdre le gainage'] },
-                    { id:'fr26c2', name:'Pompes', meta:'3 series avec 2 reps de marge | repos 75 sec', purpose:'Endurance musculaire du haut du corps.', steps:['Corps gaine','Descendre proprement','S arreter 2 reps avant l echec'], progression:'Quand 3 series deviennent faciles, monter doucement le total de reps.' },
-                    { id:'fr26c3', name:'Tractions assistees ou tirage vertical', meta:'3 x 6 a 8 | repos 90 sec', purpose:'Renforcer le tirage vertical dans une zone de travail propre.', steps:['Epaules basses','Tirer sans balancer','Revenir lentement'] },
-                    { id:'fr26c4', name:'Rowing poulie basse', meta:'3 x 12 | repos 75 sec', purpose:'Augmenter la capacite de travail du dos avec stress lombaire faible.', steps:['Poitrine ouverte','Trajet controle','Retour lent'] },
-                    { id:'fr26c5', name:'Pull-through poulie ou extension 45 degres legere', meta:'2 a 3 x 12 | repos 60 sec', purpose:'Travailler la charniere hanche-tronc sans deadlift lourd.', steps:['Garder un dos neutre','Bouger depuis les hanches','Finir avec les fessiers'], warning:'Si le dos tire en fin d amplitude, reduire la charge et l amplitude.' },
-                    { id:'fr26c6', name:'Curl biceps + extension triceps poulie', meta:'2 x 12 a 15 de chaque | repos 45 sec', purpose:'Petit volume bras sans fatigue excessive.', steps:['Execution propre','Controle sur toute l amplitude','Pas de triche du buste'] },
-                    { id:'fr26c7', name:'Cardio progressif', meta:'10 min | 1 min moderee / 1 min plus rapide x 5', purpose:'Finir la seance avec un effort cardio utile et controlable.', steps:['Rester en controle respiratoire','Si match de foot prevu, reduire ce bloc','Sortir de seance plus fatigue cardio que musculaire'] },
-                    { id:'fr26c8', name:'Routine tendon / dos', meta:'8 min | apres seance ou jours off', purpose:'Entretenir la progression du droit femoral et du bas du dos.', steps:['Leg extension isometrique 4 x 20 a 30 sec','Bird dog 2 x 6 par cote','Dead bug 2 x 6 par cote','McGill curl-up modifie 2 x 8','Marche 10 a 20 min si possible'] }
-                ]
-            }
-        ]
-    },
     {
         id: 'force_fullbody',
         name: 'Force Full Body — Personnalisé',
@@ -1203,13 +1112,12 @@ db.version(1).stores({ settings:'key', progress:'date', pain:'date', sessions:'d
 db.version(2).stores({ settings:'key', progress:'date', pain:'date', sessions:'date', loadNotes:'[exId+date]' });
 
 let state = {
-    currentProgram: 'football_recomp_2026',
+    currentProgram: 'force_fullbody',
     currentPhase: 1,
     startDate: today(),
     completedExercises: {},
     completedSessions: [],
     painLog: {},
-    sessionMetrics: {},
     darkMode: false,
     loadNotes: {}
 };
@@ -1243,13 +1151,12 @@ async function loadState() {
             if (!state.loadNotes[r.exId]) state.loadNotes[r.exId] = {};
             state.loadNotes[r.exId][r.date] = r.note;
         });
-        if (!state.sessionMetrics || typeof state.sessionMetrics !== 'object') state.sessionMetrics = {};
     } catch(e) { console.warn('DB load error', e); }
 }
 
 async function saveState() {
     try {
-        const keys = ['currentProgram','currentPhase','startDate','darkMode','sessionMetrics'];
+        const keys = ['currentProgram','currentPhase','startDate','darkMode'];
         await db.settings.bulkPut(keys.map(k => ({ key:k, value:state[k] })));
         const progItems = Object.entries(state.completedExercises).map(([date,v]) => ({ date, completedExercises:v }));
         if (progItems.length) await db.progress.bulkPut(progItems);
@@ -1287,8 +1194,16 @@ async function init() {
     });
     $('adminProgCount').textContent = PROGRAMS.length;
 
-    // session metrics UI
-    renderSessionMetricsCard();
+    // pain scale
+    const ps = $('painScale');
+    for (let i = 0; i <= 10; i++) {
+        const b = document.createElement('button');
+        b.className = 'pain-btn';
+        b.dataset.v = i;
+        b.textContent = i;
+        b.onclick = () => logPain(i);
+        ps.appendChild(b);
+    }
 
     // activate saved program
     sel.value = state.currentProgram;
@@ -1389,13 +1304,7 @@ function renderExercise(ex, isDone) {
             <ul class="steps">${stepsHtml}</ul>
             ${ex.warning   ? `<div class="alert-box alert-warning">⚠️ <b>Attention :</b> ${esc(ex.warning)}</div>` : ''}
             ${ex.progression ? `<div class="alert-box alert-info">📈 <b>Progression :</b> ${esc(ex.progression)}</div>` : ''}
-            <div class="load-note-block" style="margin-top:12px">
-                <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-light);display:block;margin-bottom:4px">📊 Charge / RPE du jour</label>
-                <input type="text" class="load-input" placeholder="ex: 4×5 @ 80 kg — RPE 7" value="${getLoadNote(ex.id)}"
-                    oninput="saveLoadNote('${esc(ex.id)}', this.value)"
-                    style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-                <div style="font-size:11px;color:var(--text-light);margin-top:4px">Dernière : ${getLastLoadNote(ex.id) || '<em>—</em>'}</div>
-            </div>
+            ${renderSeriesTracker(ex.id, ex.meta)}
             <a class="yt-btn" href="${ytUrl(ex.name)}" target="_blank" rel="noopener">▶ Voir sur YouTube</a>
         </div>
     </div>`;
@@ -1442,50 +1351,23 @@ function checkPhaseComplete() {
 // ─────────────────────────────────────────────────────────────────────────────
 function renderSeance() {
     if (!prog) return;
+    // phase buttons
     const btns = $('phaseBtns');
     btns.innerHTML = prog.phases.map(ph =>
-        `<button class="phase-btn${ph.id===state.currentPhase?' active':''}" onclick="setPhase(${ph.id})">${phaseButtonLabel(ph)}</button>`
+        `<button class="phase-btn${ph.id===state.currentPhase?' active':''}" onclick="setPhase(${ph.id})">Phase ${ph.id}</button>`
     ).join('');
+    // phase info
     const ph = prog.phases.find(p => p.id === state.currentPhase);
     if (!ph) return;
     const col = phaseColor(ph.id);
+    $('seanceInfo').innerHTML = `<div class="card" style="border-left:4px solid ${col}">
+        <div class="card-title">${esc(ph.name)}</div>
+        <div class="card-body">${esc(ph.description)}<br><b>Fréquence :</b> ${esc(ph.frequency)}</div>
+    </div>`;
+    // BUG FIX: use ex directly, no nested loop
     const done = state.completedExercises[today()] || [];
-    const metrics = getTodayMetrics();
-    const week = getCurrentWeek();
-    const weekPlan = getWeekPlan(week);
-    const completedCount = ph.exercises.filter(ex => done.includes(ex.id)).length;
-    const maxPain = Math.max(metrics.tendonPain || 0, metrics.backPain || 0);
-    const modeLabel = metrics.matchDay ? 'Jour de match' : 'Jour standard';
-    const adjustments = metrics.matchDay
-        ? ['Retirer 1 serie sur les jambes si fatigue ou match proche', 'Remplacer les intervalles par 8 a 10 min de zone 2', 'Garder 2 a 3 reps de marge partout']
-        : ['Plan complet autorise si douleurs stables', 'Cardio prevu maintenu', 'Progression normale si technique propre'];
-    $('seanceInfo').innerHTML = `
-        <div class="card" style="border-left:4px solid ${col}">
-            <div class="card-title">${esc(ph.name)}</div>
-            <div class="card-body">${esc(ph.description)}<br><b>Frequence :</b> ${esc(ph.frequency)}${ph.rule ? `<br><b>Regle :</b> ${esc(ph.rule)}` : ''}</div>
-        </div>
-        <div class="session-summary-grid">
-            <div class="micro-stat"><div class="micro-stat-value">${week}/${prog.duration}</div><div class="micro-stat-label">Semaine active</div></div>
-            <div class="micro-stat"><div class="micro-stat-value">${completedCount}/${ph.exercises.length}</div><div class="micro-stat-label">Exercices coches</div></div>
-            <div class="micro-stat"><div class="micro-stat-value">${modeLabel}</div><div class="micro-stat-label">Mode du jour</div></div>
-            <div class="micro-stat"><div class="micro-stat-value">${maxPain}/10</div><div class="micro-stat-label">Douleur max</div></div>
-        </div>
-        <div class="card week-card">
-            <div class="week-title">${esc(weekPlan.title)}</div>
-            <div class="week-focus">${esc(weekPlan.focus)}</div>
-            <ul class="week-list">${weekPlan.bullets.map(item => `<li>${esc(item)}</li>`).join('')}</ul>
-        </div>
-        <div class="card">
-            <div class="card-title">Ajustements du jour</div>
-            <div class="card-body"><ul class="week-list">${adjustments.map(item => `<li>${esc(item)}</li>`).join('')}</ul></div>
-        </div>
-    `;
     const exHtml = ph.exercises.map(ex => {
         const stepsHtml = ex.steps.map(s => `<li>${esc(s)}</li>`).join('');
-        const progressionHtml = ex.progression ? `<div class="alert-box alert-info"><b>Progression :</b> ${esc(ex.progression)}</div>` : '';
-        const matchHtml = metrics.matchDay && /Cardio|Intervalles/i.test(ex.name + ' ' + ex.meta)
-            ? `<div class="alert-box alert-info">Mode match : convertir ce bloc en cardio facile ou le raccourcir si besoin.</div>`
-            : '';
         return `<div class="exercise${done.includes(ex.id)?' completed':''}" data-id="${esc(ex.id)}" id="sex-${esc(ex.id)}">
             <div class="exercise-header" onclick="seanceDone2('${esc(ex.id)}')">
                 <div class="exercise-check">✓</div>
@@ -1498,8 +1380,7 @@ function renderSeance() {
                 <p><b>Objectif :</b> ${esc(ex.purpose)}</p>
                 <ul class="steps">${stepsHtml}</ul>
                 ${ex.warning ? `<div class="alert-box alert-warning">⚠️ ${esc(ex.warning)}</div>` : ''}
-                ${progressionHtml}
-                ${matchHtml}
+                ${renderSeriesTracker(ex.id, ex.meta)}
                 <a class="yt-btn" href="${ytUrl(ex.name)}" target="_blank" rel="noopener">▶ Voir sur YouTube</a>
             </div>
         </div>`;
@@ -1600,111 +1481,11 @@ function resetTimer() {
 function updateTimerDisplay() { $('timerDisplay').textContent = fmt(timerSec); }
 function fmt(s) { return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
 
-function phaseButtonLabel(ph) {
-    const labels = ['A','B','C','D','E'];
-    if (prog && prog.id === 'football_recomp_2026') return 'Seance ' + (labels[(ph.id - 1) % labels.length] || ph.id);
-    return 'Phase ' + ph.id;
-}
-function getCurrentWeek() {
-    if (!prog) return 1;
-    const start = new Date(state.startDate || today());
-    const now = new Date(today());
-    const diffDays = Math.max(0, Math.floor((now - start) / 86400000));
-    return Math.min(prog.duration || 1, Math.max(1, Math.floor(diffDays / 7) + 1));
-}
-function getWeekPlan(week) {
-    if (prog && prog.id === 'football_recomp_2026') {
-        const plans = [
-            { title: 'Semaine 1', focus: 'Installation technique', bullets: ['Rester a 2-3 reps de marge', 'Valider les trajectoires', 'Noter les charges de base'] },
-            { title: 'Semaine 2', focus: 'Stabiliser le volume', bullets: ['Reprendre les memes charges si besoin', 'Chercher plus de proprete', 'Aucune hausse si douleur > 2/10'] },
-            { title: 'Semaine 3', focus: 'Ajouter des repetitions', bullets: ['Ajouter 1 rep sur les mouvements principaux si propre', 'Cardio identique', 'Toujours laisser 1-3 reps de marge'] },
-            { title: 'Semaine 4', focus: 'Consolider puis charger legerement', bullets: ['Si toutes les series passent, monter de 2,5 a 5 %', 'Conserver la meme technique', 'Pas de sprint max'] },
-            { title: 'Semaine 5', focus: 'Bloc de charge 1', bullets: ['Charge un peu plus haute sur les gros mouvements', 'Volume stable', 'Surveiller tendon et dos le lendemain'] },
-            { title: 'Semaine 6', focus: 'Bloc de charge 2', bullets: ['Chercher le haut de fourchette ou une petite hausse', 'Pas d echec musculaire', 'Foot prioritaire si fatigue'] },
-            { title: 'Semaine 7', focus: 'Semaine haute propre', bullets: ['Volume normal', 'Intensite haute mais propre', 'Aucune serie forcee'] },
-            { title: 'Semaine 8', focus: 'Deload intelligent', bullets: ['Reduire le volume de 30 a 40 %', 'Garder un peu d intensite', 'Cardio plus leger et match prioritaire'] }
-        ];
-        return plans[Math.min(plans.length, Math.max(1, week)) - 1];
-    }
-    return {
-        title: 'Semaine ' + week,
-        focus: 'Progression reguliere',
-        bullets: ['Respecter la technique', 'Adapter selon la fatigue', 'Valider avant de charger']
-    };
-}
-function getTodayMetrics() {
-    if (!state.sessionMetrics || typeof state.sessionMetrics !== 'object') state.sessionMetrics = {};
-    const t = today();
-    if (!state.sessionMetrics[t]) state.sessionMetrics[t] = { matchDay: false, tendonPain: 0, backPain: 0 };
-    return state.sessionMetrics[t];
-}
-function buildSessionFeedback(metrics) {
-    const maxPain = Math.max(metrics.tendonPain || 0, metrics.backPain || 0);
-    let color = '#16a34a';
-    let msg = 'Etat vert : seance normale autorisee.';
-    if (maxPain > 2) { color = '#f59e0b'; msg = 'Etat orange : reduire un peu la charge ou le volume.'; }
-    if (maxPain > 5) { color = '#dc2626'; msg = 'Etat rouge : modifier la seance et eviter toute agressivite inutile.'; }
-    const extra = metrics.matchDay
-        ? 'Mode match actif : retirer 1 serie sur les jambes si fatigue et passer le cardio intense en zone 2 legere.'
-        : 'Pas de match : plan complet si douleurs stables.';
-    return `<span style="color:${color};font-weight:700">${msg}</span><br><span style="color:var(--text-light)">${extra}</span>`;
-}
-function renderMetricScale(key, current) {
-    let html = '<div class="pain-scale">';
-    for (let i = 0; i <= 10; i++) {
-        html += `<button class="pain-btn${i===current?' selected':''}" onclick="setSessionMetric('${key}', ${i})">${i}</button>`;
-    }
-    html += '</div>';
-    html += '<div class="pain-labels" style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-light);margin-top:6px;font-weight:700;text-transform:uppercase"><span>0</span><span>5</span><span>10</span></div>';
-    return html;
-}
-function renderSessionMetricsCard() {
-    const c = $('sessionMetricsCard');
-    if (!c) return;
-    const metrics = getTodayMetrics();
-    c.innerHTML = `
-        <div class="card-title">Etat de la seance</div>
-        <div style="font-size:12px;color:var(--text-light);margin:6px 0 10px">Suivi specifique du jour : mode match, douleur tendon et douleur dos.</div>
-        <div class="match-toggle">
-            <button class="match-btn${!metrics.matchDay?' active':''}" onclick="setMatchDay(false)">Pas de match</button>
-            <button class="match-btn${metrics.matchDay?' active':''}" onclick="setMatchDay(true)">Jour de match</button>
-        </div>
-        <div class="metric-grid">
-            <div>
-                <div class="metric-title">Douleur tendon</div>
-                ${renderMetricScale('tendonPain', metrics.tendonPain || 0)}
-            </div>
-            <div>
-                <div class="metric-title">Douleur dos</div>
-                ${renderMetricScale('backPain', metrics.backPain || 0)}
-            </div>
-        </div>
-        <div id="painFeedback" style="margin-top:10px;font-size:13px;line-height:1.5">${buildSessionFeedback(metrics)}</div>
-    `;
-}
-function saveSessionMetrics(patch) {
-    const t = today();
-    const current = getTodayMetrics();
-    const next = Object.assign({}, current, patch);
-    state.sessionMetrics[t] = next;
-    state.painLog[t] = Math.max(next.tendonPain || 0, next.backPain || 0);
-    saveState();
-    renderSessionMetricsCard();
-    renderSuivi();
-    const seanceSection = document.getElementById('section-seance');
-    if (seanceSection && seanceSection.classList.contains('active')) renderSeance();
-}
-function setMatchDay(isMatchDay) {
-    saveSessionMetrics({ matchDay: !!isMatchDay });
-}
-function setSessionMetric(key, value) {
-    saveSessionMetrics({ [key]: value });
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // SUIVI TAB
 // ─────────────────────────────────────────────────────────────────────────────
 function renderSuivi() {
+    // stats
     $('statSessions').textContent = state.completedSessions.length;
     let streak = 0;
     const now = new Date();
@@ -1715,10 +1496,13 @@ function renderSuivi() {
         else if (i > 0) break;
     }
     $('statStreak').textContent = streak;
-    const metrics = getTodayMetrics();
-    if ($('statTendon')) $('statTendon').textContent = metrics.tendonPain || 0;
-    if ($('statBack')) $('statBack').textContent = metrics.backPain || 0;
-    renderSessionMetricsCard();
+    // pain today
+    const t = today();
+    if (state.painLog[t] !== undefined) {
+        document.querySelectorAll('.pain-btn').forEach(b => {
+            b.classList.toggle('selected', parseInt(b.dataset.v) === state.painLog[t]);
+        });
+    }
     renderCalendar();
     renderSuiviPhaseBtns();
 }
@@ -1727,7 +1511,7 @@ function renderSuiviPhaseBtns() {
     const c = $('suiviPhaseBtns');
     if (!prog || !c) return;
     c.innerHTML = prog.phases.map(ph =>
-        `<button class="phase-btn${ph.id===state.currentPhase?' active':''}" onclick="setPhase(${ph.id})">${phaseButtonLabel(ph)}</button>`
+        `<button class="phase-btn${ph.id===state.currentPhase?' active':''}" onclick="setPhase(${ph.id})">Phase ${ph.id}</button>`
     ).join('');
 }
 
@@ -1773,7 +1557,7 @@ function renderCalendar() {
 // BUG FIX: compare only exercises of active phase (not total completed count)
 function updateProgress() {
     if (!prog) return;
-    const total = prog.duration * (prog.sessionsPerWeek || 4); // sessions estimees
+    const total = prog.duration * 4; // sessions estimées
     const pct = Math.min(100, Math.round(state.completedSessions.length / total * 100));
     $('progressFill').style.width = pct + '%';
     $('progressTxt').textContent = pct + '% du programme';
@@ -1944,27 +1728,147 @@ function renderRotationBanner() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LOAD NOTES
+// SERIES TRACKER
 // ─────────────────────────────────────────────────────────────────────────────
-function saveLoadNote(exId, value) {
-    const t = today();
-    if (!state.loadNotes[exId]) state.loadNotes[exId] = {};
-    state.loadNotes[exId][t] = value;
-    saveState();
+
+// Parse meta to guess default number of sets (e.g. "4×10" → 4, "3 × 8–10" → 3)
+function parseDefaultSets(meta) {
+    if (!meta) return 3;
+    const m = meta.match(/(\d+)\s*[×xX]/);
+    return m ? parseInt(m[1]) : 3;
 }
 
-function getLoadNote(exId) {
-    const t = today();
-    return (state.loadNotes[exId] && state.loadNotes[exId][t]) || '';
+// Get series data for an exercise on a given date
+function getSeriesData(exId, date) {
+    date = date || today();
+    if (!state.loadNotes[exId] || !state.loadNotes[exId][date]) return null;
+    const raw = state.loadNotes[exId][date];
+    // Support legacy string notes
+    if (typeof raw === 'string') return null;
+    return raw; // { sets: [{reps, charge, repos},...] }
 }
 
-function getLastLoadNote(exId) {
-    if (!state.loadNotes[exId]) return '';
+// Get last session's series data (before today)
+function getLastSeriesData(exId) {
+    if (!state.loadNotes[exId]) return null;
+    const t = today();
     const dates = Object.keys(state.loadNotes[exId]).sort().reverse();
     for (const d of dates) {
-        if (state.loadNotes[exId][d]) return state.loadNotes[exId][d] + ' <span style="color:var(--text-light);font-size:10px">('+d+')</span>';
+        if (d === t) continue;
+        const raw = state.loadNotes[exId][d];
+        if (raw && typeof raw === 'object' && raw.sets) return { date: d, data: raw };
+        if (raw && typeof raw === 'string') return { date: d, legacy: raw };
     }
-    return '';
+    return null;
+}
+
+// Save one field of a series
+function saveSeriesField(exId, setIdx, field, value) {
+    const t = today();
+    if (!state.loadNotes[exId]) state.loadNotes[exId] = {};
+    let data = getSeriesData(exId, t);
+    if (!data) data = { sets: [] };
+    // Extend sets array if needed
+    while (data.sets.length <= setIdx) data.sets.push({ reps: '', charge: '', repos: '' });
+    data.sets[setIdx][field] = value;
+    state.loadNotes[exId][t] = data;
+    saveState();
+    // Update filled class
+    const input = document.querySelector(`[data-series-id="${exId}-${setIdx}-${field}"]`);
+    if (input) input.classList.toggle('filled', value !== '');
+}
+
+// Add a series row to an exercise
+function addSeriesRow(exId) {
+    const t = today();
+    if (!state.loadNotes[exId]) state.loadNotes[exId] = {};
+    let data = getSeriesData(exId, t);
+    if (!data) data = { sets: [] };
+    data.sets.push({ reps: '', charge: '', repos: '' });
+    state.loadNotes[exId][t] = data;
+    saveState();
+    // Re-render the tracker in place
+    refreshSeriesTracker(exId);
+}
+
+// Remove a series row
+function removeSeriesRow(exId, setIdx) {
+    const t = today();
+    let data = getSeriesData(exId, t);
+    if (!data || !data.sets[setIdx]) return;
+    data.sets.splice(setIdx, 1);
+    state.loadNotes[exId][t] = data;
+    saveState();
+    refreshSeriesTracker(exId);
+}
+
+// Refresh all tracker instances for this exercise
+function refreshSeriesTracker(exId) {
+    document.querySelectorAll(`.series-tracker[data-ex="${exId}"]`).forEach(el => {
+        const meta = el.dataset.meta || '';
+        el.outerHTML = renderSeriesTracker(exId, meta);
+    });
+}
+
+// Render the series tracker HTML for an exercise
+function renderSeriesTracker(exId, meta) {
+    const t = today();
+    let data = getSeriesData(exId, t);
+    const defaultSets = parseDefaultSets(meta);
+    // Initialize if no data yet
+    if (!data) {
+        data = { sets: [] };
+        for (let i = 0; i < defaultSets; i++) data.sets.push({ reps: '', charge: '', repos: '' });
+    }
+    const last = getLastSeriesData(exId);
+
+    let rows = '';
+    data.sets.forEach((s, i) => {
+        const rFilled = s.reps !== '' ? ' filled' : '';
+        const cFilled = s.charge !== '' ? ' filled' : '';
+        const tFilled = s.repos !== '' ? ' filled' : '';
+        rows += `<tr>
+            <td>${i + 1}</td>
+            <td><input type="number" inputmode="numeric" class="series-input${rFilled}" data-series-id="${esc(exId)}-${i}-reps"
+                placeholder="—" value="${esc(s.reps)}" min="0"
+                oninput="saveSeriesField('${esc(exId)}',${i},'reps',this.value)"></td>
+            <td><input type="number" inputmode="decimal" class="series-input${cFilled}" data-series-id="${esc(exId)}-${i}-charge"
+                placeholder="—" value="${esc(s.charge)}" min="0" step="0.5"
+                oninput="saveSeriesField('${esc(exId)}',${i},'charge',this.value)"></td>
+            <td><input type="number" inputmode="numeric" class="series-input${tFilled}" data-series-id="${esc(exId)}-${i}-repos"
+                placeholder="—" value="${esc(s.repos)}" min="0" step="5"
+                oninput="saveSeriesField('${esc(exId)}',${i},'repos',this.value)"></td>
+            <td><button class="series-row-remove" onclick="removeSeriesRow('${esc(exId)}',${i})" title="Supprimer">×</button></td>
+        </tr>`;
+    });
+
+    let lastHtml = '';
+    if (last) {
+        if (last.legacy) {
+            lastHtml = `<div class="series-last-session">📅 Dernière séance <span style="font-size:10px">(${last.date})</span> : ${esc(last.legacy)}</div>`;
+        } else if (last.data && last.data.sets) {
+            const summary = last.data.sets.map((s, i) =>
+                `S${i+1}: ${s.reps || '—'} reps × ${s.charge || '—'} kg, repos ${s.repos || '—'}s`
+            ).join(' | ');
+            lastHtml = `<div class="series-last-session">📅 <b>Dernière séance</b> <span style="font-size:10px">(${last.date})</span><br>${esc(summary)}</div>`;
+        }
+    }
+
+    return `<div class="series-tracker" data-ex="${esc(exId)}" data-meta="${esc(meta)}">
+        <label class="series-tracker-label">📊 Suivi des séries</label>
+        <table class="series-table">
+            <thead><tr>
+                <th>#</th>
+                <th>Reps</th>
+                <th>Charge (kg)</th>
+                <th>Repos (s)</th>
+                <th></th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+        </table>
+        <button class="series-add-btn" onclick="addSeriesRow('${esc(exId)}')">＋ Ajouter une série</button>
+        ${lastHtml}
+    </div>`;
 }
 
 // BOOT
@@ -1972,6 +1876,3 @@ init();
 </script>
 </body>
 </html>
-
-
-
