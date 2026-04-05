@@ -529,6 +529,40 @@
             border: 1px solid var(--border);
         }
         .series-last-session b { color: var(--text); }
+
+        /* Validate button & done row */
+        .series-validate-btn {
+            background: none; border: none; color: var(--text-light);
+            cursor: pointer; font-size: 17px; padding: 2px 4px; opacity: 0.4;
+            transition: opacity 0.2s, color 0.2s;
+        }
+        .series-validate-btn:hover { opacity: 1; color: #10b981; }
+        .series-validate-btn.done { opacity: 1; color: #10b981; }
+        .series-done td { background: color-mix(in srgb, #10b981 7%, var(--bg)); }
+        .series-done .series-input { opacity: 0.65; }
+
+        /* Rest timer banner */
+        .rest-banner {
+            display: none; align-items: center; justify-content: space-between;
+            gap: 10px; margin-top: 10px;
+            background: linear-gradient(135deg, #164E63, #0891B2);
+            border-radius: 10px; padding: 12px 16px; color: white;
+        }
+        .rest-banner.done { background: linear-gradient(135deg, #065f46, #10b981); }
+        .rest-banner-left { display: flex; flex-direction: column; gap: 2px; }
+        .rest-label { font-size: 11px; opacity: 0.8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .rest-serie-label { font-size: 12px; opacity: 0.9; font-weight: 600; }
+        .rest-countdown {
+            font-family: 'Courier New', monospace; font-size: 30px; font-weight: 900;
+            letter-spacing: 3px; font-variant-numeric: tabular-nums;
+        }
+        .rest-skip-btn {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            color: white; border-radius: 6px; padding: 6px 11px;
+            font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .rest-skip-btn:hover { background: rgba(255,255,255,0.25); }
     </style>
 </head>
 <body>
@@ -2056,6 +2090,94 @@ function refreshSeriesTracker(exId) {
         const meta = el.dataset.meta || '';
         el.outerHTML = renderSeriesTracker(exId, meta);
     });
+    // Restore rest banner display if timer is still running for this exercise
+    if (restTimerExId === exId) {
+        document.querySelectorAll(`.rest-banner[data-ex="${exId}"]`).forEach(b => {
+            b.style.display = 'flex';
+        });
+    }
+}
+
+// Rest timer state
+let restTimerInterval = null;
+let restTimerExId = null;
+
+function validateSeries(exId, setIdx) {
+    const t = today();
+    if (!state.loadNotes[exId]) state.loadNotes[exId] = {};
+    let data = getSeriesData(exId, t);
+    if (!data) data = { sets: [] };
+    while (data.sets.length <= setIdx) data.sets.push({ reps: '', charge: '', repos: '', done: false });
+    // Toggle done
+    data.sets[setIdx].done = !data.sets[setIdx].done;
+    state.loadNotes[exId][t] = data;
+    saveState();
+    if (data.sets[setIdx].done) {
+        const reposVal = parseInt(data.sets[setIdx].repos);
+        if (reposVal > 0) {
+            startRestTimer(exId, setIdx + 1, reposVal);
+        }
+    } else {
+        if (restTimerExId === exId) skipRestTimer(exId);
+    }
+    refreshSeriesTracker(exId);
+}
+
+function startRestTimer(exId, serieNum, seconds) {
+    // Stop any running timer first
+    if (restTimerInterval) {
+        clearInterval(restTimerInterval);
+        restTimerInterval = null;
+        if (restTimerExId) {
+            document.querySelectorAll(`.rest-banner[data-ex="${restTimerExId}"]`).forEach(b => {
+                b.style.display = 'none';
+                b.classList.remove('done');
+            });
+        }
+    }
+    restTimerExId = exId;
+    let remaining = seconds;
+    // Show & init banner
+    document.querySelectorAll(`.rest-banner[data-ex="${exId}"]`).forEach(b => {
+        b.style.display = 'flex';
+        b.classList.remove('done');
+        b.querySelector('.rest-serie-label').textContent = 'Série ' + serieNum + ' terminée';
+        b.querySelector('.rest-countdown').textContent = fmt(remaining);
+    });
+    restTimerInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+            clearInterval(restTimerInterval);
+            restTimerInterval = null;
+            document.querySelectorAll(`.rest-banner[data-ex="${exId}"]`).forEach(b => {
+                b.querySelector('.rest-countdown').textContent = '✅ Go !';
+                b.classList.add('done');
+            });
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.connect(g); g.connect(ctx.destination);
+                osc.frequency.value = 880; g.gain.value = 0.3;
+                osc.start();
+                setTimeout(() => { osc.stop(); ctx.close(); }, 600);
+            } catch(e) {}
+        } else {
+            document.querySelectorAll(`.rest-banner[data-ex="${exId}"]`).forEach(b => {
+                b.querySelector('.rest-countdown').textContent = fmt(remaining);
+            });
+        }
+    }, 1000);
+}
+
+function skipRestTimer(exId) {
+    if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
+    restTimerExId = null;
+    document.querySelectorAll(`.rest-banner[data-ex="${exId}"]`).forEach(b => {
+        b.style.display = 'none';
+        b.classList.remove('done');
+    });
 }
 
 function renderSeriesTracker(exId, meta) {
@@ -2073,7 +2195,8 @@ function renderSeriesTracker(exId, meta) {
         const rFilled = s.reps !== '' ? ' filled' : '';
         const cFilled = s.charge !== '' ? ' filled' : '';
         const tFilled = s.repos !== '' ? ' filled' : '';
-        rows += `<tr>
+        const isDone = s.done === true;
+        rows += `<tr${isDone ? ' class="series-done"' : ''}>
             <td>${i + 1}</td>
             <td><input type="number" inputmode="numeric" class="series-input${rFilled}" data-series-id="${esc(exId)}-${i}-reps"
                 placeholder="—" value="${esc(s.reps)}" min="0"
@@ -2084,7 +2207,10 @@ function renderSeriesTracker(exId, meta) {
             <td><input type="number" inputmode="numeric" class="series-input${tFilled}" data-series-id="${esc(exId)}-${i}-repos"
                 placeholder="—" value="${esc(s.repos)}" min="0" step="5"
                 oninput="saveSeriesField('${esc(exId)}',${i},'repos',this.value)"></td>
-            <td><button class="series-row-remove" onclick="removeSeriesRow('${esc(exId)}',${i})" title="Supprimer">×</button></td>
+            <td style="white-space:nowrap">
+                <button class="series-validate-btn${isDone ? ' done' : ''}" onclick="validateSeries('${esc(exId)}',${i})" title="${isDone ? 'Annuler' : 'Valider la série'}">✓</button>
+                <button class="series-row-remove" onclick="removeSeriesRow('${esc(exId)}',${i})" title="Supprimer">×</button>
+            </td>
         </tr>`;
     });
 
@@ -2113,6 +2239,14 @@ function renderSeriesTracker(exId, meta) {
             <tbody>${rows}</tbody>
         </table>
         <button class="series-add-btn" onclick="addSeriesRow('${esc(exId)}')">＋ Ajouter une série</button>
+        <div class="rest-banner" data-ex="${esc(exId)}">
+            <div class="rest-banner-left">
+                <div class="rest-label">⏱ Temps de repos</div>
+                <div class="rest-serie-label"></div>
+            </div>
+            <div class="rest-countdown">00:00</div>
+            <button class="rest-skip-btn" onclick="skipRestTimer('${esc(exId)}')">Passer →</button>
+        </div>
         ${lastHtml}
     </div>`;
 }
