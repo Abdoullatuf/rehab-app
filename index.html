@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
     <meta charset="UTF-8">
@@ -856,13 +856,13 @@ const PROGRAMS = [
                 frequency: 'Rotation A → B → C (1 séance sur 3)',
                 rule: 'Douleur max 2/10 sur tous les exercices',
                 exercises: [
-                    { id:'fb1e1', name:'Squat haltères / barre',
+                    { id:'fb1e1', name:'Squat haltères / barre', mediaUrl:'./assets/squat_illustration_1775427762074.png',
                       meta:'Ph 1–4 : 4×6 | Ph 5–8 : 4×5 | Ph 9–12 : 5×5',
                       purpose:'Exercice roi du bas du corps : quadriceps, fessiers, chaîne postérieure. Progression charge linéaire.',
                       steps:["Pieds largeur d'épaules, orteils légèrement ouverts","Haltères à l'épaule ou barre position haute","Inspirer, gainage fort — descendre contrôlé 3 sec jusqu'à parallèle","Genoux dans l'axe des pieds — jamais vers l'intérieur","Pousser fort dans le sol, expirer en remontant"],
                       progression:'Augmenter de 2,5 kg quand les séries sont maîtrisées (≤ RPE 8).',
                       warning:'Dos toujours neutre — ne jamais arrondir les lombaires sous charge.' },
-                    { id:'fb1e2', name:'Soulevé de terre roumain',
+                    { id:'fb1e2', name:'Soulevé de terre roumain', mediaUrl:'./assets/deadlift_illustration_1775427773855.png',
                       meta:'3×8 rép | Tempo 3-1-2 | Poids modéré',
                       purpose:'Renforcer ischio-jambiers, fessiers et érecteurs du rachis. Clé pour le bas du dos sans compression.',
                       steps:["Debout, haltères ou barre devant les cuisses","Légère flexion des genoux fixe tout au long","Pencher le buste dos plat — hanches poussées vers l'arrière","Descendre jusqu'à mi-tibia en sentant l'étirement des ischios","Remonter en contractant les fessiers et poussant les hanches en avant"],
@@ -877,12 +877,12 @@ const PROGRAMS = [
                       meta:'4×10 rép | Tempo 2-1-3',
                       purpose:'Équilibre poussée/tirage. Renforce dos, rhomboïdes et correcteurs posturaux.',
                       steps:["Saisir la poignée ou l'haltère à hauteur de poitrine","Dos légèrement incliné, gainage actif","Tirer en ramenant les coudes près du corps — épaules basses","Serrer les omoplates 1 sec en fin de mouvement","Revenir lentement 3 sec — bras presque tendus"] },
-                    { id:'fb1e5', name:'Pont fessier unilatéral',
+                    { id:'fb1e5', name:'Pont fessier unilatéral', mediaUrl:'https://placehold.co/600x400/0891b2/FFFFFF.png?text=Pont+Fessier',
                       meta:'3×10 rép par jambe | Tempo 2-2-2',
                       purpose:'Renforcer les fessiers en unilatéral — corrige les déséquilibres D/G et soulage le bas du dos.',
                       steps:["Allongé sur le dos, un genou fléchi, l'autre jambe tendue vers le plafond","Serrer le fessier porteur et soulever le bassin","Maintenir 2 sec — bassin parfaitement horizontal","Redescendre lentement 2 sec","Compléter toutes les reps d'un côté, puis changer"],
                       progression:'Ajouter un élastique sur les hanches quand le geste est maîtrisé.' },
-                    { id:'fb1e6', name:'Gainage planche avec variation',
+                    { id:'fb1e6', name:'Gainage planche avec variation', mediaUrl:'./assets/plank_illustration_1775427797986.png',
                       meta:'3×30–45 sec | Repos 30 sec',
                       purpose:'Stabiliser le tronc et protéger le bas du dos lors des charges lourdes.',
                       steps:["Appui sur avant-bras, corps parfaitement aligné","Pas de creux dorsal ni de fesses en l'air","Contracter abdos + fessiers + quadriceps simultanément","Respirer régulièrement — ne jamais bloquer","Variation : lever alternativement un bras ou une jambe"],
@@ -894,12 +894,12 @@ const PROGRAMS = [
                 description: 'Accent pectoraux, dos, épaules et bras. Séance équilibrée poussée / tirage.',
                 frequency: 'Rotation A → B → C (1 séance sur 3)',
                 exercises: [
-                    { id:'fb2e1', name:'Développé couché haltères / barre',
+                    { id:'fb2e1', name:'Développé couché haltères / barre', mediaUrl:'./assets/benchpress_illustration_1775427787141.png',
                       meta:'Ph 1–4 : 4×8 | Ph 5–8 : 4×5 | Ph 9–12 : 5×3–5',
                       purpose:'Développer la force des pectoraux, deltoïdes antérieurs et triceps.',
                       steps:["Allongé sur banc plat, pieds fermement au sol","Barre ou haltères à hauteur des pectoraux, coudes à 45–75° du buste","Inspirer — descendre contrôlé 3 sec jusqu'à effleurer la poitrine","Pousser explosif en expirant — verrouillage partiel des coudes en haut","Omoplates rétractées et déprimées tout au long"],
                       progression:'Augmenter de 2,5 kg par semaine si technique parfaite et RPE ≤ 8.' },
-                    { id:'fb2e2', name:'Tractions / Lat pulldown',
+                    { id:'fb2e2', name:'Tractions / Lat pulldown', mediaUrl:'https://placehold.co/600x400/0891b2/FFFFFF.png?text=Tractions',
                       meta:'4×6–8 rép',
                       purpose:'Développer la largeur du dos (grand dorsal). Exercice fondamental de tirage vertical.',
                       steps:["Saisir la barre en pronation, écart légèrement plus large que les épaules","Partir bras tendus — ne pas tricher avec les épaules","Tirer en amenant les coudes vers les hanches, poitrine vers la barre","Omoplates abaissées et rétractées en bas du mouvement","Revenir lentement 3 sec jusqu'à extension complète"],
@@ -913,7 +913,7 @@ const PROGRAMS = [
                       meta:'3×10 rép par bras | Tempo 2-1-3',
                       purpose:'Renforcer le grand dorsal en unilatéral. Corrige les déséquilibres gauche-droite.',
                       steps:["Un genou et une main sur le banc — buste parallèle au sol","Saisir l'haltère, bras tendu vers le bas","Tirer en ramenant le coude au-dessus du buste (pas vers l'extérieur)","Maintenir 1 sec en haut","Redescendre lentement 3 sec jusqu'à extension complète"] },
-                    { id:'fb2e5', name:'Dips ou Pushdown triceps',
+                    { id:'fb2e5', name:'Dips ou Pushdown triceps', mediaUrl:'https://placehold.co/600x400/0891b2/FFFFFF.png?text=Dips',
                       meta:'3×10–12 rép',
                       purpose:'Isoler les triceps — essentiel pour progresser sur le développé couché.',
                       steps:["Dips : appui sur barres parallèles, descendre jusqu'à 90° de flexion du coude","Ou Pushdown câble : coudes fixes le long du buste, pousser vers le bas","Contrôler la descente 2 sec","Extension complète en bas — 1 sec de contraction","Revenir lentement"] },
@@ -929,7 +929,7 @@ const PROGRAMS = [
                 frequency: 'Rotation A → B → C (1 séance sur 3)',
                 rule: 'Priorité qualité d\'exécution — douleur max 2/10',
                 exercises: [
-                    { id:'fb3e1', name:'Squat bulgare',
+                    { id:'fb3e1', name:'Squat bulgare', mediaUrl:'./assets/squat_illustration_1775427762074.png',
                       meta:'3×8–10 rép par jambe | Tempo 3-1-2',
                       purpose:'Renforcement intensif du quadriceps (droit fémoral) en position étirée. Corrige les déséquilibres D/G.',
                       steps:["Pied arrière posé sur un banc (à hauteur de genou environ)","Pied avant stable, à 60–70 cm du banc","Descendre lentement 3 sec — sentir l'étirement à l'avant de la hanche côté arrière","Maintenir 1 sec en bas","Pousser sur le talon du pied avant pour remonter en 2 sec"],
@@ -1467,7 +1467,11 @@ function renderExercise(ex, isDone) {
         </div>
         <div class="exercise-details">
             <p><b>Objectif :</b> ${esc(ex.purpose)}</p>
-            ${ex.mediaUrl ? `<img src="${esc(ex.mediaUrl)}" style="max-width:100%;max-height:280px;border-radius:8px;margin:10px 0" alt="">` : ''}
+            ${ex.mediaUrl ? `
+            <div style="margin: 14px 0; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border); background: var(--card); overflow: hidden; display: flex; justify-content: center; padding: 10px;">
+                <img src="${esc(ex.mediaUrl)}" loading="lazy" style="max-width:100%; max-height:240px; border-radius: 8px;" alt="${esc(ex.name)} animation">
+            </div>
+            ` : ''}
             <ul class="steps">${stepsHtml}</ul>
             ${ex.warning   ? `<div class="alert-box alert-warning">⚠️ <b>Attention :</b> ${esc(ex.warning)}</div>` : ''}
             ${ex.progression ? `<div class="alert-box alert-info">📈 <b>Progression :</b> ${esc(ex.progression)}</div>` : ''}
@@ -1572,6 +1576,11 @@ function renderSeance() {
             </div>
             <div class="exercise-details" style="display:block;border-top:1px solid var(--border)">
                 <p><b>Objectif :</b> ${esc(ex.purpose)}</p>
+                ${ex.mediaUrl ? `
+                <div style="margin: 14px 0; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border); background: var(--card); overflow: hidden; display: flex; justify-content: center; padding: 10px;">
+                    <img src="${esc(ex.mediaUrl)}" loading="lazy" style="max-width:100%; max-height:240px; border-radius: 8px;" alt="${esc(ex.name)} animation">
+                </div>
+                ` : ''}
                 <ul class="steps">${stepsHtml}</ul>
                 ${ex.warning ? `<div class="alert-box alert-warning">⚠️ ${esc(ex.warning)}</div>` : ''}
                 ${progressionHtml}
