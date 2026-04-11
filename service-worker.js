@@ -1,22 +1,22 @@
-const CACHE_NAME = 'monprog-v4-2026-04-09-3';
+﻿const CACHE_NAME = 'monprog-v4-2026-04-11-1';
 const HTML_FALLBACK = './index.html';
 const STATIC_ASSETS = [
-  './manifest.json?v=20260409-3',
-  './styles/main.css?v=20260409-3',
-  './styles/components.css?v=20260409-3',
-  './styles/animations.css?v=20260409-3',
-  './js/config/firebase-config.js?v=20260409-3',
-  './js/modules/validation.js?v=20260409-3',
-  './js/modules/notifications.js?v=20260409-3',
-  './js/modules/storage.js?v=20260409-3',
-  './js/modules/firebase.js?v=20260409-3',
-  './js/modules/ui.js?v=20260409-3',
-  './js/modules/seriesTracker.js?v=20260409-3',
-  './js/modules/exercises.js?v=20260409-3',
-  './js/services/exerciseService.js?v=20260409-3',
-  './js/services/syncService.js?v=20260409-3',
-  './js/seed.js?v=20260409-3',
-  './js/app.js?v=20260409-3',
+  './manifest.json?v=20260411-1',
+  './styles/main.css?v=20260411-1',
+  './styles/components.css?v=20260411-1',
+  './styles/animations.css?v=20260411-1',
+  './js/config/firebase-config.js?v=20260411-1',
+  './js/modules/validation.js?v=20260411-1',
+  './js/modules/notifications.js?v=20260411-1',
+  './js/modules/storage.js?v=20260411-1',
+  './js/modules/firebase.js?v=20260411-1',
+  './js/modules/ui.js?v=20260411-1',
+  './js/modules/seriesTracker.js?v=20260411-1',
+  './js/modules/exercises.js?v=20260411-1',
+  './js/services/exerciseService.js?v=20260411-1',
+  './js/services/syncService.js?v=20260411-1',
+  './js/seed.js?v=20260411-1',
+  './js/app.js?v=20260411-1',
   './assets/benchpress_illustration_1775427787141.png',
   './assets/bicep_curl.png',
   './assets/bird_dog.png',
@@ -117,3 +117,4 @@ self.addEventListener('fetch', event => {
     event.respondWith(staleWhileRevalidate(event.request));
   }
 });
+
