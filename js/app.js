@@ -562,22 +562,41 @@ const app = {
         if (!pane.dataset.enhancedSuivi) {
             this.destroySuiviCharts();
             pane.innerHTML = `
-                <div class="section-title">Suivi & Progression</div>
+                <div class="section-title">📊 Suivi & Progression</div>
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-value" id="statSessions">0</div><div class="stat-label">Seances</div></div>
-                    <div class="stat-card"><div class="stat-value" id="statStreak">0</div><div class="stat-label">Streak</div></div>
-                    <div class="stat-card"><div class="stat-value" id="statExercisesDone">0</div><div class="stat-label">Exercices coches</div></div>
-                    <div class="stat-card"><div class="stat-value" id="statVolume">0</div><div class="stat-label">Volume total</div></div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-value" id="statSessions">0</div><div class="stat-label">Séances</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-value" id="statStreak">0</div><div class="stat-label">Streak (Jours)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="statExercisesDone">0</div><div class="stat-label">Exercices Validés</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-value" id="statVolume">0</div><div class="stat-label">Volume Total (kg)</div>
+                    </div>
                 </div>
                 <div class="card">
-                    <div class="card-title">Calendrier du mois</div>
+                    <div class="card-title">Calendrier d'activité</div>
                     <div class="cal-grid" id="calendar"></div>
+                    <div style="display:flex;justify-content:flex-end;gap:4px;margin-top:8px;font-size:10px;color:var(--text-light);align-items:center;">
+                        Moins <div class="cal-day" style="width:12px;height:12px;border-radius:2px"></div>
+                        <div class="cal-day heat-1" style="width:12px;height:12px;border-radius:2px"></div>
+                        <div class="cal-day heat-2" style="width:12px;height:12px;border-radius:2px"></div>
+                        <div class="cal-day heat-3" style="width:12px;height:12px;border-radius:2px"></div> Plus
+                    </div>
                 </div>
                 <div class="card">
-                    <div class="card-title">Carte du corps</div>
-                    <div class="card-body" id="suiviZonesMeta">Les zones se colorent selon les seances recentes.</div>
-                    <div id="suiviBodyMap"></div>
-                    <div id="suiviZoneSummary"></div>
+                    <div class="card-title">Répartition Musculaire</div>
+                    <div class="card-body" id="suiviZonesMeta">Analyse de l'équilibre du travail sur les groupes musculaires.</div>
+                    
+                    <!-- Radar Canvas -->
+                    <div style="position:relative;height:250px;margin:16px 0"><canvas id="suiviRadarChart" aria-label="Graphique radar d'equilibre musculaire"></canvas></div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px">
                     <div class="card" style="margin-bottom:0">
@@ -677,6 +696,7 @@ const app = {
             { id: 'chest', label: 'Pectoraux' },
             { id: 'biceps', label: 'Biceps' },
             { id: 'triceps', label: 'Triceps' },
+            { id: 'forearms', label: 'Avant-bras' },
             { id: 'upperBack', label: 'Haut du dos' },
             { id: 'lowerBack', label: 'Bas du dos' },
             { id: 'core', label: 'Abdos / tronc' },
@@ -695,6 +715,7 @@ const app = {
             [['pector', 'chest'], ['chest']],
             [['biceps'], ['biceps']],
             [['triceps'], ['triceps']],
+            [['avant-bras', 'avant bras', 'forearm'], ['forearms']],
             [['haut du dos', 'dors', 'omoplate', 'trap'], ['upperBack']],
             [['lomb', 'bas du dos'], ['lowerBack']],
             [['abdo', 'tronc', 'core', 'oblique', 'gainage'], ['core']],
@@ -770,84 +791,7 @@ const app = {
         return '#f97316';
     },
 
-    renderBodyFigure(side, zoneStats) {
-        const zoneMap = new Map(zoneStats.map(zone => [zone.id, zone]));
-        const fill = zoneId => this.getZoneColor(zoneMap.get(zoneId));
-        const base = 'rgba(148,163,184,0.14)';
-        if (side === 'front') {
-            return `<svg viewBox="0 0 160 340" role="img" aria-label="Avatar avant" style="width:100%;max-width:180px;height:auto;display:block;margin:0 auto">
-                <circle cx="80" cy="28" r="18" fill="${base}" />
-                <rect x="61" y="44" width="38" height="22" rx="14" fill="${base}" />
-                <rect x="50" y="70" width="60" height="86" rx="28" fill="${base}" />
-                <rect x="34" y="72" width="18" height="82" rx="10" fill="${base}" />
-                <rect x="108" y="72" width="18" height="82" rx="10" fill="${base}" />
-                <rect x="58" y="156" width="18" height="110" rx="12" fill="${base}" />
-                <rect x="84" y="156" width="18" height="110" rx="12" fill="${base}" />
-                <rect x="44" y="68" width="24" height="26" rx="12" fill="${fill('shoulders')}" />
-                <rect x="92" y="68" width="24" height="26" rx="12" fill="${fill('shoulders')}" />
-                <rect x="52" y="82" width="56" height="34" rx="18" fill="${fill('chest')}" />
-                <rect x="30" y="88" width="16" height="42" rx="8" fill="${fill('biceps')}" />
-                <rect x="114" y="88" width="16" height="42" rx="8" fill="${fill('biceps')}" />
-                <rect x="58" y="118" width="44" height="42" rx="16" fill="${fill('core')}" />
-                <rect x="58" y="170" width="18" height="74" rx="10" fill="${fill('quads')}" />
-                <rect x="84" y="170" width="18" height="74" rx="10" fill="${fill('quads')}" />
-            </svg>`;
-        }
-        return `<svg viewBox="0 0 160 340" role="img" aria-label="Avatar arriere" style="width:100%;max-width:180px;height:auto;display:block;margin:0 auto">
-            <circle cx="80" cy="28" r="18" fill="${base}" />
-            <rect x="61" y="44" width="38" height="22" rx="14" fill="${base}" />
-            <rect x="50" y="70" width="60" height="86" rx="28" fill="${base}" />
-            <rect x="34" y="72" width="18" height="82" rx="10" fill="${base}" />
-            <rect x="108" y="72" width="18" height="82" rx="10" fill="${base}" />
-            <rect x="58" y="156" width="18" height="110" rx="12" fill="${base}" />
-            <rect x="84" y="156" width="18" height="110" rx="12" fill="${base}" />
-            <rect x="44" y="68" width="24" height="26" rx="12" fill="${fill('shoulders')}" />
-            <rect x="92" y="68" width="24" height="26" rx="12" fill="${fill('shoulders')}" />
-            <rect x="52" y="82" width="56" height="38" rx="18" fill="${fill('upperBack')}" />
-            <rect x="30" y="90" width="16" height="40" rx="8" fill="${fill('triceps')}" />
-            <rect x="114" y="90" width="16" height="40" rx="8" fill="${fill('triceps')}" />
-            <rect x="58" y="122" width="44" height="24" rx="12" fill="${fill('lowerBack')}" />
-            <rect x="56" y="148" width="48" height="28" rx="14" fill="${fill('glutes')}" />
-            <rect x="58" y="180" width="18" height="64" rx="10" fill="${fill('hamstrings')}" />
-            <rect x="84" y="180" width="18" height="64" rx="10" fill="${fill('hamstrings')}" />
-            <rect x="58" y="248" width="16" height="50" rx="10" fill="${fill('calves')}" />
-            <rect x="86" y="248" width="16" height="50" rx="10" fill="${fill('calves')}" />
-        </svg>`;
-    },
 
-    renderSuiviBodyMap(sessions, exerciseMap) {
-        const meta = document.getElementById('suiviZonesMeta');
-        const map = document.getElementById('suiviBodyMap');
-        const summary = document.getElementById('suiviZoneSummary');
-        if (!meta || !map || !summary) return;
-        const zones = this.buildZoneStats(sessions, exerciseMap);
-        const active = zones.filter(zone => zone.score > 0);
-        map.innerHTML = `
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;align-items:start">
-                <div style="padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">${this.renderBodyFigure('front', zones)}<div style="text-align:center;font-size:12px;font-weight:700;color:var(--text);margin-top:8px">Avant</div></div>
-                <div style="padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">${this.renderBodyFigure('back', zones)}<div style="text-align:center;font-size:12px;font-weight:700;color:var(--text);margin-top:8px">Arriere</div></div>
-            </div>`;
-        if (!active.length) {
-            meta.textContent = 'Aucune zone visible pour le moment. Complete quelques exercices pour faire apparaitre les zones travaillees.';
-            summary.innerHTML = '<div class="empty-state">Le body map se nourrit des exercices coches et des series saisies.</div>';
-            return;
-        }
-        const strong = [...active].sort((a, b) => b.score - a.score).slice(0, 3);
-        const weak = [...zones].sort((a, b) => a.score - b.score).slice(0, 3);
-        meta.textContent = `Lecture sur les ${Math.min(sessions.length, 12)} dernieres seances.`;
-        summary.innerHTML = `
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px">
-                <div style="padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">
-                    <div style="font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;margin-bottom:8px">Zones a renforcer</div>
-                    ${weak.map(zone => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,184,0.18);font-size:12px"><span>${this.escapeHtml(zone.label)}</span><span style="color:var(--text-light)">${zone.score > 0 ? this.formatCompactNumber(zone.score) : 'faible'}</span></div>`).join('')}
-                </div>
-                <div style="padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">
-                    <div style="font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;margin-bottom:8px">Zones bien travaillees</div>
-                    ${strong.map(zone => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,184,0.18);font-size:12px"><span>${this.escapeHtml(zone.label)}</span><span style="color:#10b981">${this.formatCompactNumber(zone.score)}</span></div>`).join('')}
-                </div>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">${zones.map(zone => `<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:var(--bg);font-size:11px;font-weight:700;color:var(--text)"><span style="width:10px;height:10px;border-radius:999px;background:${this.getZoneColor(zone)}"></span>${this.escapeHtml(zone.label)}</span>`).join('')}</div>`;
-    },
     createSuiviSession(date) {
         return { date, exercises: new Map() };
     },
@@ -992,13 +936,15 @@ const app = {
         this._suiviCharts = {};
     },
 
-    renderSuiviCharts(sessions) {
+    renderSuiviCharts(sessions, exerciseMap) {
         this.destroySuiviCharts();
         if (typeof Chart === 'undefined') return;
 
         const sessionsCanvas = document.getElementById('suiviSessionsChart');
         const volumeCanvas = document.getElementById('suiviVolumeChart');
-        if (!sessionsCanvas || !volumeCanvas) return;
+        const radarCanvas = document.getElementById('suiviRadarChart');
+        
+        if (sessionsCanvas) {
 
         const byDate = new Map(sessions.map(session => [session.date, session]));
         const recentDays = [];
@@ -1061,9 +1007,10 @@ const app = {
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16,185,129,0.18)',
                     fill: true,
-                    tension: 0.28,
-                    pointRadius: 3,
-                    pointHoverRadius: 4
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 3
                 }]
             },
             options: {
@@ -1076,6 +1023,47 @@ const app = {
                 }
             }
         });
+        } // End of if (sessionsCanvas)
+
+        // 3. RADAR CHART (Equilibre Musculaire)
+        if (radarCanvas && exerciseMap) {
+            const zones = this.buildZoneStats(sessions, exerciseMap);
+            const activeZones = zones.filter(z => z.score > 0);
+            
+            if (activeZones.length > 0) {
+                this._suiviCharts.radar = new Chart(radarCanvas, {
+                    type: 'radar',
+                    data: {
+                        labels: activeZones.map(z => z.label),
+                        datasets: [{
+                            label: 'Intensité',
+                            data: activeZones.map(z => z.score),
+                            backgroundColor: 'rgba(8, 145, 178, 0.2)',
+                            borderColor: '#0891B2',
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#10b981',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                angleLines: { color: 'rgba(148,163,184,0.2)' },
+                                grid: { color: 'rgba(148,163,184,0.2)' },
+                                pointLabels: { font: { size: 10, weight: 'bold' }, color: '#64748b' },
+                                ticks: { display: false }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        }
     },
 
     renderSuiviHistory(sessions) {
@@ -1151,13 +1139,12 @@ const app = {
         if (statExercisesDone) statExercisesDone.textContent = sessions.reduce((sum, session) => sum + session.completedCount, 0);
         if (statVolume) statVolume.textContent = this.formatCompactNumber(sessions.reduce((sum, session) => sum + session.totalVolume, 0));
 
-        this.renderCalendar(sessions.map(session => ({ date: session.date })));
-        this.renderSuiviBodyMap(sessions, exerciseMap);
-        this.renderSuiviCharts(sessions);
+        this.renderCalendar(sessions);
+        this.renderSuiviCharts(sessions, exerciseMap);
         this.renderSuiviHistory(sessions);
     },
 
-    renderCalendar(progressList) {
+    renderCalendar(sessions) {
         const cal = document.getElementById('calendar');
         if (!cal) return;
         const now = new Date();
@@ -1165,14 +1152,28 @@ const app = {
         const firstDay = new Date(y, m, 1);
         const lastDay = new Date(y, m + 1, 0);
         const t = today();
-        const activeDates = new Set((progressList || []).map(p => p.date));
+        
+        const sessionsByDate = new Map((sessions || []).map(s => [s.date, s]));
+        
         let html = ['L','M','M','J','V','S','D'].map(d => `<div class="cal-head">${d}</div>`).join('');
         let start = firstDay.getDay() - 1; if (start < 0) start = 6;
         for (let i = 0; i < start; i++) html += `<div class="cal-day empty"></div>`;
+        
         for (let d = 1; d <= lastDay.getDate(); d++) {
             const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const cls = ['cal-day', activeDates.has(ds) ? 'done' : '', ds === t ? 'today' : ''].join(' ');
-            html += `<div class="${cls}">${d}</div>`;
+            const s = sessionsByDate.get(ds);
+            let heatClass = '';
+            
+            if (s) {
+                // Determine heat level based on number of completed exercises
+                if (s.completedCount >= 5) { heatClass = 'heat-3'; }
+                else if (s.completedCount >= 3) { heatClass = 'heat-2'; }
+                else if (s.completedCount > 0) { heatClass = 'heat-1'; }
+                else if (s.exerciseCount > 0) { heatClass = 'done'; } // just tracked, not fully done
+            }
+            
+            const cls = ['cal-day', heatClass, ds === t ? 'today' : ''].join(' ').trim();
+            html += `<div class="${cls}" title="${s ? s.completedCount + ' exos validés' : ''}">${d}</div>`;
         }
         cal.innerHTML = html;
     },
