@@ -17,23 +17,25 @@ function toggleEx(id) {
 }
 
 /** Toggle l'état "complété" d'un exercice */
-function toggleDone(id) {
+async function toggleDone(id) {
     const t = today();
     if (!completedExercises[t]) completedExercises[t] = [];
     const arr = completedExercises[t];
     const idx = arr.indexOf(id);
     if (idx > -1) arr.splice(idx, 1); else arr.push(id);
-    // Mise à jour visuelle de toutes les occurrences (programme + séance)
+    const isDone = arr.includes(id);
+    // Mise a jour visuelle de toutes les occurrences (programme + seance)
     ['ex-', 'sex-'].forEach(prefix => {
         const el = document.getElementById(prefix + id);
-        if (el) el.classList.toggle('completed', arr.includes(id));
+        if (el) el.classList.toggle('completed', isDone);
     });
     // Persist
     try {
-        StorageManager.setSetting('completedExercises', JSON.stringify(completedExercises));
+        await StorageManager.setSetting('completedExercises', JSON.stringify(completedExercises));
     } catch (e) {}
-    if (window.app?.renderSeance) window.app.renderSeance();
-    if (window.app?.updateHeaderProgress) window.app.updateHeaderProgress();
+    if (window.app?.renderSeance) await window.app.renderSeance();
+    if (window.app?.updateHeaderProgress) await window.app.updateHeaderProgress();
+    if (window.app?.syncExerciseProgress) await window.app.syncExerciseProgress(id, isDone);
 }
 
 // ─── Timer global (décompte, comme l'app source) ──────────────────────────────
@@ -366,6 +368,44 @@ const app = {
             <button onclick="app.setPhase(${nextId})" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">→ ${nextLabel}</button>`;
     },
 
+    async syncExerciseProgress(exerciseId, isDone) {
+        const date = today();
+        const recordId = `${exerciseId}_${date}`;
+        try {
+            if (!isDone) {
+                await db.progress.delete(recordId);
+                if (StorageManager.addToSyncQueue) {
+                    await StorageManager.addToSyncQueue('progress', 'delete', { id: recordId, exerciseId, date });
+                }
+            } else {
+                const summary = this.summarizeSeriesData(SeriesTracker.getSeriesData ? SeriesTracker.getSeriesData(exerciseId, date) : null);
+                const record = {
+                    id: recordId,
+                    exerciseId,
+                    date,
+                    timestamp: Date.now(),
+                    sets: summary.totalSets || 0,
+                    completedSets: summary.completedSets || 0,
+                    reps: summary.maxReps || 0,
+                    totalReps: summary.totalReps || 0,
+                    weight: summary.maxLoad || 0,
+                    totalVolume: summary.totalVolume || 0
+                };
+                await db.progress.put(record);
+                if (StorageManager.addToSyncQueue) {
+                    await StorageManager.addToSyncQueue('progress', 'update', { ...record, updatedAt: Date.now() });
+                }
+            }
+        } catch (err) {
+            console.warn('syncExerciseProgress:', err);
+        }
+
+        const suiviPane = document.getElementById('section-suivi');
+        if (suiviPane && suiviPane.classList.contains('active')) {
+            await this.renderSuivi();
+        }
+    },
+
     /**
      * Affiche une section
      */
@@ -516,14 +556,605 @@ const app = {
     /**
      * Rendu page Suivi
      */
+    ensureSuiviLayout() {
+        const pane = document.getElementById('section-suivi');
+        if (!pane) return null;
+        if (!pane.dataset.enhancedSuivi) {
+            this.destroySuiviCharts();
+            pane.innerHTML = `
+                <div class="section-title">Suivi & Progression</div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-value" id="statSessions">0</div><div class="stat-label">Seances</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statStreak">0</div><div class="stat-label">Streak</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statExercisesDone">0</div><div class="stat-label">Exercices coches</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statVolume">0</div><div class="stat-label">Volume total</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Calendrier du mois</div>
+                    <div class="cal-grid" id="calendar"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Carte du corps</div>
+                    <div class="card-body" id="suiviZonesMeta">Les zones se colorent selon les seances recentes.</div>
+                    <div id="suiviBodyMap"></div>
+                    <div id="suiviZoneSummary"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px">
+                    <div class="card" style="margin-bottom:0">
+                        <div class="card-title">Regularite sur 14 jours</div>
+                        <div style="position:relative;height:220px;margin-top:12px"><canvas id="suiviSessionsChart" aria-label="Graphique des seances recentes"></canvas></div>
+                    </div>
+                    <div class="card" style="margin-bottom:0">
+                        <div class="card-title">Charge / effort par seance</div>
+                        <div style="position:relative;height:220px;margin-top:12px"><canvas id="suiviVolumeChart" aria-label="Graphique du volume par seance"></canvas></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Historique recent</div>
+                    <div class="card-body" id="suiviHistoryMeta">Aucune seance enregistree pour le moment.</div>
+                    <div id="suiviHistory"></div>
+                </div>`;
+            pane.dataset.enhancedSuivi = 'true';
+        }
+        return pane;
+    },
+
+    escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = value == null ? '' : String(value);
+        return div.innerHTML;
+    },
+
+    parseSuiviDate(dateStr) {
+        if (!dateStr || typeof dateStr !== 'string') return null;
+        const parts = dateStr.split('-').map(part => parseInt(part, 10));
+        if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+        return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0, 0);
+    },
+
+    formatSuiviDate(dateStr, options = { day: '2-digit', month: 'short' }) {
+        const date = this.parseSuiviDate(dateStr);
+        if (!date) return dateStr || '';
+        return date.toLocaleDateString('fr-FR', options);
+    },
+
+    formatCompactNumber(value) {
+        const num = Number(value || 0);
+        if (!Number.isFinite(num) || num <= 0) return '0';
+        if (num >= 10000) return Math.round(num / 1000) + 'k';
+        if (num >= 1000) return (Math.round(num / 100) / 10) + 'k';
+        return String(Math.round(num));
+    },
+
+    summarizeSeriesData(data) {
+        const summary = {
+            hasActivity: false,
+            totalSets: 0,
+            completedSets: 0,
+            totalReps: 0,
+            totalVolume: 0,
+            maxLoad: 0,
+            maxReps: 0
+        };
+        if (!data || !Array.isArray(data.sets)) return summary;
+
+        data.sets.forEach(set => {
+            const repsRaw = set && set.reps != null ? String(set.reps).trim() : '';
+            const loadRaw = set && set.charge != null ? String(set.charge).trim() : '';
+            const restRaw = set && set.repos != null ? String(set.repos).trim() : '';
+            const done = !!(set && set.done);
+            const hasValues = repsRaw !== '' || loadRaw !== '' || restRaw !== '';
+            if (!hasValues && !done) return;
+
+            const reps = Number.parseFloat(repsRaw) || 0;
+            const load = Number.parseFloat(loadRaw) || 0;
+
+            summary.hasActivity = true;
+            summary.totalSets += 1;
+            if (done) summary.completedSets += 1;
+            summary.totalReps += reps;
+            summary.totalVolume += reps * load;
+            summary.maxLoad = Math.max(summary.maxLoad, load);
+            summary.maxReps = Math.max(summary.maxReps, reps);
+        });
+
+        return summary;
+    },
+
+    getRelevantExercises(allExercises = []) {
+        if (!this.currentProgram) return allExercises || [];
+        return (allExercises || []).filter(exercise => exercise.programId === this.currentProgram.id);
+    },
+
+﻿
+    normalizeText(value) {
+        return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    },
+
+    zoneDefinitions() {
+        return [
+            { id: 'shoulders', label: 'Epaules' },
+            { id: 'chest', label: 'Pectoraux' },
+            { id: 'biceps', label: 'Biceps' },
+            { id: 'triceps', label: 'Triceps' },
+            { id: 'upperBack', label: 'Haut du dos' },
+            { id: 'lowerBack', label: 'Bas du dos' },
+            { id: 'core', label: 'Abdos / tronc' },
+            { id: 'glutes', label: 'Fessiers' },
+            { id: 'quads', label: 'Quadriceps' },
+            { id: 'hamstrings', label: 'Ischios' },
+            { id: 'calves', label: 'Mollets' }
+        ];
+    },
+
+    mapExplicitZone(label) {
+        const text = this.normalizeText(label);
+        const found = new Set();
+        [
+            [['epaule', 'deltoide'], ['shoulders']],
+            [['pector', 'chest'], ['chest']],
+            [['biceps'], ['biceps']],
+            [['triceps'], ['triceps']],
+            [['haut du dos', 'dors', 'omoplate', 'trap'], ['upperBack']],
+            [['lomb', 'bas du dos'], ['lowerBack']],
+            [['abdo', 'tronc', 'core', 'oblique', 'gainage'], ['core']],
+            [['fess', 'glute'], ['glutes']],
+            [['quadriceps', 'quadri'], ['quads']],
+            [['ischio', 'hamstring'], ['hamstrings']],
+            [['mollet', 'calf'], ['calves']]
+        ].forEach(([tokens, zones]) => {
+            if (tokens.some(token => text.includes(token))) zones.forEach(zone => found.add(zone));
+        });
+        return [...found];
+    },
+
+    inferExerciseZones(exercise) {
+        if (!exercise) return [];
+        const explicit = [];
+        if (Array.isArray(exercise.zones)) explicit.push(...exercise.zones);
+        if (Array.isArray(exercise.targetMuscles)) explicit.push(...exercise.targetMuscles);
+        const mapped = new Set();
+        explicit.forEach(label => this.mapExplicitZone(label).forEach(zone => mapped.add(zone)));
+        if (mapped.size) return [...mapped];
+
+        const text = this.normalizeText([
+            exercise.name,
+            exercise.purpose,
+            exercise.meta,
+            ...(Array.isArray(exercise.steps) ? exercise.steps : [])
+        ].join(' '));
+        const found = new Set();
+        [
+            [['pompe', 'pushup', 'developpe', 'bench press', 'chest press'], ['chest', 'shoulders', 'triceps']],
+            [['rowing', 'tirage', 'traction', 'pullup', 'pull up', 'lat pulldown', 'poulie'], ['upperBack', 'biceps']],
+            [['elevation laterale', 'elevations laterales', 'epaules', 'deltoide'], ['shoulders']],
+            [['curl biceps', 'biceps curl', 'curl'], ['biceps']],
+            [['triceps', 'dips'], ['triceps']],
+            [['squat', 'leg press', 'presse', 'hack squat', 'fente', 'split squat'], ['quads', 'glutes']],
+            [['leg curl', 'ischio', 'nordic'], ['hamstrings']],
+            [['hip thrust', 'pont fessier', 'glute bridge'], ['glutes', 'hamstrings']],
+            [['souleve de terre', 'deadlift'], ['lowerBack', 'glutes', 'hamstrings']],
+            [['planche', 'gainage', 'pallof', 'abdo', 'core', 'tronc', 'oblique'], ['core']],
+            [['mollet', 'calf'], ['calves']],
+            [['bird dog'], ['core', 'lowerBack']],
+            [['cardio', 'velo', 'elliptique'], ['quads', 'calves', 'core']]
+        ].forEach(([tokens, zones]) => {
+            if (tokens.some(token => text.includes(token))) zones.forEach(zone => found.add(zone));
+        });
+        return [...found];
+    },
+
+    buildZoneStats(sessions, exerciseMap) {
+        const stats = this.zoneDefinitions().map(zone => ({ ...zone, score: 0 }));
+        const byId = new Map(stats.map(zone => [zone.id, zone]));
+        sessions.slice(0, 12).forEach(session => {
+            session.exercises.forEach(metric => {
+                const zones = this.inferExerciseZones(exerciseMap.get(metric.exerciseId));
+                const weight = Math.max(metric.completedSets || 0, metric.totalSets || 0, metric.done ? 1 : 0);
+                if (!weight) return;
+                zones.forEach(zoneId => {
+                    const zone = byId.get(zoneId);
+                    if (zone) zone.score += weight;
+                });
+            });
+        });
+        const maxScore = Math.max(...stats.map(zone => zone.score), 0) || 1;
+        return stats.map(zone => ({ ...zone, intensity: zone.score / maxScore }));
+    },
+
+    getZoneColor(zone) {
+        if (!zone || zone.score <= 0) return 'rgba(148,163,184,0.18)';
+        if (zone.intensity >= 0.75) return '#10b981';
+        if (zone.intensity >= 0.45) return '#22c55e';
+        if (zone.intensity >= 0.2) return '#f59e0b';
+        return '#f97316';
+    },
+
+    renderBodyFigure(side, zoneStats) {
+        const zoneMap = new Map(zoneStats.map(zone => [zone.id, zone]));
+        const fill = zoneId => this.getZoneColor(zoneMap.get(zoneId));
+        const base = 'rgba(148,163,184,0.14)';
+        if (side === 'front') {
+            return `<svg viewBox="0 0 160 340" role="img" aria-label="Avatar avant" style="width:100%;max-width:180px;height:auto;display:block;margin:0 auto">
+                <circle cx="80" cy="28" r="18" fill="${base}" />
+                <rect x="61" y="44" width="38" height="22" rx="14" fill="${base}" />
+                <rect x="50" y="70" width="60" height="86" rx="28" fill="${base}" />
+                <rect x="34" y="72" width="18" height="82" rx="10" fill="${base}" />
+                <rect x="108" y="72" width="18" height="82" rx="10" fill="${base}" />
+                <rect x="58" y="156" width="18" height="110" rx="12" fill="${base}" />
+                <rect x="84" y="156" width="18" height="110" rx="12" fill="${base}" />
+                <rect x="44" y="68" width="24" height="26" rx="12" fill="${fill('shoulders')}" />
+                <rect x="92" y="68" width="24" height="26" rx="12" fill="${fill('shoulders')}" />
+                <rect x="52" y="82" width="56" height="34" rx="18" fill="${fill('chest')}" />
+                <rect x="30" y="88" width="16" height="42" rx="8" fill="${fill('biceps')}" />
+                <rect x="114" y="88" width="16" height="42" rx="8" fill="${fill('biceps')}" />
+                <rect x="58" y="118" width="44" height="42" rx="16" fill="${fill('core')}" />
+                <rect x="58" y="170" width="18" height="74" rx="10" fill="${fill('quads')}" />
+                <rect x="84" y="170" width="18" height="74" rx="10" fill="${fill('quads')}" />
+            </svg>`;
+        }
+        return `<svg viewBox="0 0 160 340" role="img" aria-label="Avatar arriere" style="width:100%;max-width:180px;height:auto;display:block;margin:0 auto">
+            <circle cx="80" cy="28" r="18" fill="${base}" />
+            <rect x="61" y="44" width="38" height="22" rx="14" fill="${base}" />
+            <rect x="50" y="70" width="60" height="86" rx="28" fill="${base}" />
+            <rect x="34" y="72" width="18" height="82" rx="10" fill="${base}" />
+            <rect x="108" y="72" width="18" height="82" rx="10" fill="${base}" />
+            <rect x="58" y="156" width="18" height="110" rx="12" fill="${base}" />
+            <rect x="84" y="156" width="18" height="110" rx="12" fill="${base}" />
+            <rect x="44" y="68" width="24" height="26" rx="12" fill="${fill('shoulders')}" />
+            <rect x="92" y="68" width="24" height="26" rx="12" fill="${fill('shoulders')}" />
+            <rect x="52" y="82" width="56" height="38" rx="18" fill="${fill('upperBack')}" />
+            <rect x="30" y="90" width="16" height="40" rx="8" fill="${fill('triceps')}" />
+            <rect x="114" y="90" width="16" height="40" rx="8" fill="${fill('triceps')}" />
+            <rect x="58" y="122" width="44" height="24" rx="12" fill="${fill('lowerBack')}" />
+            <rect x="56" y="148" width="48" height="28" rx="14" fill="${fill('glutes')}" />
+            <rect x="58" y="180" width="18" height="64" rx="10" fill="${fill('hamstrings')}" />
+            <rect x="84" y="180" width="18" height="64" rx="10" fill="${fill('hamstrings')}" />
+            <rect x="58" y="248" width="16" height="50" rx="10" fill="${fill('calves')}" />
+            <rect x="86" y="248" width="16" height="50" rx="10" fill="${fill('calves')}" />
+        </svg>`;
+    },
+
+    renderSuiviBodyMap(sessions, exerciseMap) {
+        const meta = document.getElementById('suiviZonesMeta');
+        const map = document.getElementById('suiviBodyMap');
+        const summary = document.getElementById('suiviZoneSummary');
+        if (!meta || !map || !summary) return;
+        const zones = this.buildZoneStats(sessions, exerciseMap);
+        const active = zones.filter(zone => zone.score > 0);
+        map.innerHTML = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;align-items:start">
+                <div style="padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">${this.renderBodyFigure('front', zones)}<div style="text-align:center;font-size:12px;font-weight:700;color:var(--text);margin-top:8px">Avant</div></div>
+                <div style="padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">${this.renderBodyFigure('back', zones)}<div style="text-align:center;font-size:12px;font-weight:700;color:var(--text);margin-top:8px">Arriere</div></div>
+            </div>`;
+        if (!active.length) {
+            meta.textContent = 'Aucune zone visible pour le moment. Complete quelques exercices pour faire apparaitre les zones travaillees.';
+            summary.innerHTML = '<div class="empty-state">Le body map se nourrit des exercices coches et des series saisies.</div>';
+            return;
+        }
+        const strong = [...active].sort((a, b) => b.score - a.score).slice(0, 3);
+        const weak = [...zones].sort((a, b) => a.score - b.score).slice(0, 3);
+        meta.textContent = `Lecture sur les ${Math.min(sessions.length, 12)} dernieres seances.`;
+        summary.innerHTML = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px">
+                <div style="padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">
+                    <div style="font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;margin-bottom:8px">Zones a renforcer</div>
+                    ${weak.map(zone => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,184,0.18);font-size:12px"><span>${this.escapeHtml(zone.label)}</span><span style="color:var(--text-light)">${zone.score > 0 ? this.formatCompactNumber(zone.score) : 'faible'}</span></div>`).join('')}
+                </div>
+                <div style="padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">
+                    <div style="font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;margin-bottom:8px">Zones bien travaillees</div>
+                    ${strong.map(zone => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,184,0.18);font-size:12px"><span>${this.escapeHtml(zone.label)}</span><span style="color:#10b981">${this.formatCompactNumber(zone.score)}</span></div>`).join('')}
+                </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">${zones.map(zone => `<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:var(--bg);font-size:11px;font-weight:700;color:var(--text)"><span style="width:10px;height:10px;border-radius:999px;background:${this.getZoneColor(zone)}"></span>${this.escapeHtml(zone.label)}</span>`).join('')}</div>`;
+    },
+    createSuiviSession(date) {
+        return { date, exercises: new Map() };
+    },
+
+    getSuiviMetric(session, exerciseId, exerciseMap) {
+        if (!session.exercises.has(exerciseId)) {
+            const exercise = exerciseMap.get(exerciseId);
+            session.exercises.set(exerciseId, {
+                exerciseId,
+                name: exercise && exercise.name ? exercise.name : 'Exercice',
+                done: false,
+                totalSets: 0,
+                completedSets: 0,
+                totalReps: 0,
+                totalVolume: 0,
+                maxLoad: 0,
+                sourceNotes: false,
+                sourceProgress: false,
+                sourceCompleted: false
+            });
+        }
+        return session.exercises.get(exerciseId);
+    },
+
+    buildSuiviSessions({ completedMap, progressList, noteRows, exerciseMap, scopedExerciseIds }) {
+        const sessions = new Map();
+        const inScope = exerciseId => !scopedExerciseIds.size || scopedExerciseIds.has(exerciseId);
+        const ensureSession = date => {
+            if (!sessions.has(date)) sessions.set(date, this.createSuiviSession(date));
+            return sessions.get(date);
+        };
+
+        Object.entries(completedMap || {}).forEach(([date, exerciseIds]) => {
+            (exerciseIds || []).forEach(exerciseId => {
+                if (!exerciseId || !inScope(exerciseId)) return;
+                const metric = this.getSuiviMetric(ensureSession(date), exerciseId, exerciseMap);
+                metric.done = true;
+                metric.sourceCompleted = true;
+            });
+        });
+
+        (noteRows || []).forEach(note => {
+            if (!note || !note.exerciseId || !note.date || !inScope(note.exerciseId)) return;
+            let parsed = null;
+            try {
+                parsed = note.data ? JSON.parse(note.data) : null;
+            } catch (err) {
+                return;
+            }
+            const summary = this.summarizeSeriesData(parsed);
+            if (!summary.hasActivity) return;
+            const metric = this.getSuiviMetric(ensureSession(note.date), note.exerciseId, exerciseMap);
+            metric.sourceNotes = true;
+            metric.totalSets = Math.max(metric.totalSets, summary.totalSets);
+            metric.completedSets = Math.max(metric.completedSets, summary.completedSets);
+            metric.totalReps = Math.max(metric.totalReps, summary.totalReps);
+            metric.totalVolume = Math.max(metric.totalVolume, summary.totalVolume);
+            metric.maxLoad = Math.max(metric.maxLoad, summary.maxLoad);
+            if (summary.completedSets > 0) metric.done = true;
+        });
+
+        (progressList || []).forEach(progress => {
+            if (!progress || !progress.exerciseId || !progress.date || !inScope(progress.exerciseId)) return;
+            const metric = this.getSuiviMetric(ensureSession(progress.date), progress.exerciseId, exerciseMap);
+            metric.sourceProgress = true;
+            metric.done = true;
+            if (!metric.sourceNotes) {
+                metric.totalSets = Math.max(metric.totalSets, Number(progress.completedSets ?? progress.sets ?? 0) || 0);
+                metric.completedSets = Math.max(metric.completedSets, Number(progress.completedSets ?? progress.sets ?? 0) || 0);
+                metric.totalReps = Math.max(metric.totalReps, Number(progress.totalReps ?? progress.reps ?? 0) || 0);
+                metric.totalVolume = Math.max(metric.totalVolume, Number(progress.totalVolume ?? 0) || 0);
+            }
+            metric.maxLoad = Math.max(metric.maxLoad, Number(progress.weight || 0) || 0);
+        });
+
+        return Array.from(sessions.values()).map(session => {
+            const exercises = Array.from(session.exercises.values())
+                .filter(metric => metric.done || metric.sourceNotes || metric.sourceProgress || metric.sourceCompleted)
+                .sort((a, b) => (Number(b.done) - Number(a.done)) || (b.totalVolume - a.totalVolume) || a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
+
+            const totals = exercises.reduce((acc, metric) => {
+                acc.exerciseCount += 1;
+                acc.completedCount += metric.done ? 1 : 0;
+                acc.totalSets += metric.totalSets;
+                acc.completedSets += metric.completedSets;
+                acc.totalReps += metric.totalReps;
+                acc.totalVolume += metric.totalVolume;
+                acc.maxLoad = Math.max(acc.maxLoad, metric.maxLoad);
+                return acc;
+            }, { exerciseCount: 0, completedCount: 0, totalSets: 0, completedSets: 0, totalReps: 0, totalVolume: 0, maxLoad: 0 });
+
+            return {
+                date: session.date,
+                exercises,
+                exerciseCount: totals.exerciseCount,
+                completedCount: totals.completedCount,
+                totalSets: totals.totalSets,
+                completedSets: totals.completedSets,
+                totalReps: totals.totalReps,
+                totalVolume: Math.round(totals.totalVolume),
+                maxLoad: totals.maxLoad,
+                tracked: exercises.some(metric => metric.sourceNotes || metric.sourceProgress)
+            };
+        }).sort((a, b) => b.date.localeCompare(a.date));
+    },
+
+    calculateCurrentStreak(sessions) {
+        if (!sessions.length) return 0;
+        const uniqueDates = [...new Set(sessions.map(session => session.date))].sort((a, b) => b.localeCompare(a));
+        const latest = uniqueDates[0];
+        const todayStr = today();
+        const yesterdayDate = this.parseSuiviDate(todayStr);
+        if (!yesterdayDate) return 0;
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterdayStr = [
+            yesterdayDate.getFullYear(),
+            String(yesterdayDate.getMonth() + 1).padStart(2, '0'),
+            String(yesterdayDate.getDate()).padStart(2, '0')
+        ].join('-');
+        if (latest !== todayStr && latest !== yesterdayStr) return 0;
+
+        let streak = 1;
+        for (let i = 1; i < uniqueDates.length; i++) {
+            const previous = this.parseSuiviDate(uniqueDates[i - 1]);
+            const current = this.parseSuiviDate(uniqueDates[i]);
+            if (!previous || !current) break;
+            const diffDays = Math.round((previous - current) / 86400000);
+            if (diffDays != 1) break;
+            streak += 1;
+        }
+        return streak;
+    },
+
+    destroySuiviCharts() {
+        if (!this._suiviCharts) {
+            this._suiviCharts = {};
+            return;
+        }
+        Object.values(this._suiviCharts).forEach(chart => {
+            if (chart && typeof chart.destroy === 'function') chart.destroy();
+        });
+        this._suiviCharts = {};
+    },
+
+    renderSuiviCharts(sessions) {
+        this.destroySuiviCharts();
+        if (typeof Chart === 'undefined') return;
+
+        const sessionsCanvas = document.getElementById('suiviSessionsChart');
+        const volumeCanvas = document.getElementById('suiviVolumeChart');
+        if (!sessionsCanvas || !volumeCanvas) return;
+
+        const byDate = new Map(sessions.map(session => [session.date, session]));
+        const recentDays = [];
+        const todayDate = this.parseSuiviDate(today());
+        if (!todayDate) return;
+
+        for (let offset = 13; offset >= 0; offset--) {
+            const day = new Date(todayDate);
+            day.setDate(day.getDate() - offset);
+            const key = [
+                day.getFullYear(),
+                String(day.getMonth() + 1).padStart(2, '0'),
+                String(day.getDate()).padStart(2, '0')
+            ].join('-');
+            const session = byDate.get(key);
+            recentDays.push({
+                label: day.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+                value: session ? session.exerciseCount : 0
+            });
+        }
+
+        const recentSessions = [...sessions]
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .slice(-10)
+            .map(session => ({
+                label: this.formatSuiviDate(session.date, { day: '2-digit', month: '2-digit' }),
+                value: session.totalVolume || session.totalReps || session.completedCount
+            }));
+
+        this._suiviCharts.sessions = new Chart(sessionsCanvas, {
+            type: 'bar',
+            data: {
+                labels: recentDays.map(point => point.label),
+                datasets: [{
+                    label: 'Exercices coches',
+                    data: recentDays.map(point => point.value),
+                    backgroundColor: 'rgba(8,145,178,0.75)',
+                    borderRadius: 6,
+                    maxBarThickness: 24
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { maxRotation: 0, minRotation: 0 } },
+                    y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } }
+                }
+            }
+        });
+
+        this._suiviCharts.volume = new Chart(volumeCanvas, {
+            type: 'line',
+            data: {
+                labels: recentSessions.map(point => point.label),
+                datasets: [{
+                    label: 'Charge / effort',
+                    data: recentSessions.map(point => point.value),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.18)',
+                    fill: true,
+                    tension: 0.28,
+                    pointRadius: 3,
+                    pointHoverRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { maxRotation: 0, minRotation: 0 } },
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    },
+
+    renderSuiviHistory(sessions) {
+        const meta = document.getElementById('suiviHistoryMeta');
+        const container = document.getElementById('suiviHistory');
+        if (!meta || !container) return;
+
+        if (!sessions.length) {
+            meta.textContent = 'Aucune seance enregistree pour le moment.';
+            container.innerHTML = '<div class="empty-state">Commencez a cocher vos exercices et remplir vos series pour alimenter le suivi.</div>';
+            return;
+        }
+
+        meta.textContent = `${sessions.length} seance(s) enregistree(s). Derniere seance le ${this.formatSuiviDate(sessions[0].date, { weekday: 'long', day: '2-digit', month: 'long' })}.`;
+        container.innerHTML = sessions.slice(0, 8).map(session => {
+            const summaryParts = [];
+            summaryParts.push(`${session.completedCount}/${session.exerciseCount} exercice(s)`);
+            if (session.completedSets > 0) summaryParts.push(`${session.completedSets} serie(s) validee(s)`);
+            if (session.totalReps > 0) summaryParts.push(`${session.totalReps} reps`);
+            if (session.totalVolume > 0) summaryParts.push(`${this.formatCompactNumber(session.totalVolume)} kg volume`);
+
+            const detailsHtml = session.exercises.map(metric => {
+                const detailParts = [];
+                if (metric.completedSets > 0) detailParts.push(`${metric.completedSets} serie(s)`);
+                else if (metric.totalSets > 0) detailParts.push(`${metric.totalSets} entree(s)`);
+                if (metric.totalReps > 0) detailParts.push(`${metric.totalReps} reps`);
+                if (metric.maxLoad > 0) detailParts.push(`${metric.maxLoad} kg max`);
+                if (!detailParts.length) detailParts.push(metric.done ? 'Coche' : 'Activite detectee');
+
+                return `<div style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);min-width:0">
+                    <div style="font-size:12px;font-weight:700;color:var(--text)">${this.escapeHtml(metric.name)}</div>
+                    <div style="font-size:11px;color:var(--text-light);margin-top:4px">${this.escapeHtml(detailParts.join(' - '))}</div>
+                </div>`;
+            }).join('');
+
+            return `<div style="padding:14px 0;border-top:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+                    <div>
+                        <div style="font-size:14px;font-weight:800;color:var(--text)">${this.escapeHtml(this.formatSuiviDate(session.date, { weekday: 'long', day: '2-digit', month: 'long' }))}</div>
+                        <div style="font-size:12px;color:var(--text-light);margin-top:4px">${this.escapeHtml(summaryParts.join(' - '))}</div>
+                    </div>
+                    <div style="font-size:12px;font-weight:700;color:#0891B2;white-space:nowrap">${session.tracked ? 'detail dispo' : 'cochee'}</div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:12px">${detailsHtml}</div>
+            </div>`;
+        }).join('');
+    },
+
     async renderSuivi() {
-        const today = new Date().toISOString().split('T')[0];
-        const allProgress = await StorageManager.getAllProgress?.() || [];
-        const sessions = new Set(allProgress.map(p => p.date)).size;
-        const el = s => document.getElementById(s);
-        if (el('statSessions')) el('statSessions').textContent = sessions;
-        // Calendrier
-        this.renderCalendar(allProgress);
+        this.ensureSuiviLayout();
+
+        const exercises = await db.exercises.toArray().catch(() => []);
+        const relevantExercises = this.getRelevantExercises(exercises);
+        const exerciseMap = new Map(relevantExercises.map(exercise => [exercise.id, exercise]));
+        const scopedExerciseIds = new Set(relevantExercises.map(exercise => exercise.id));
+        const progressList = await StorageManager.getAllProgress?.() || [];
+        const noteRows = await db.notes.toArray().catch(() => []);
+        const sessions = this.buildSuiviSessions({
+            completedMap: completedExercises,
+            progressList,
+            noteRows,
+            exerciseMap,
+            scopedExerciseIds
+        });
+
+        const statSessions = document.getElementById('statSessions');
+        const statStreak = document.getElementById('statStreak');
+        const statExercisesDone = document.getElementById('statExercisesDone');
+        const statVolume = document.getElementById('statVolume');
+
+        if (statSessions) statSessions.textContent = sessions.length;
+        if (statStreak) statStreak.textContent = this.calculateCurrentStreak(sessions);
+        if (statExercisesDone) statExercisesDone.textContent = sessions.reduce((sum, session) => sum + session.completedCount, 0);
+        if (statVolume) statVolume.textContent = this.formatCompactNumber(sessions.reduce((sum, session) => sum + session.totalVolume, 0));
+
+        this.renderCalendar(sessions.map(session => ({ date: session.date })));
+        this.renderSuiviBodyMap(sessions, exerciseMap);
+        this.renderSuiviCharts(sessions);
+        this.renderSuiviHistory(sessions);
     },
 
     renderCalendar(progressList) {
@@ -545,7 +1176,6 @@ const app = {
         }
         cal.innerHTML = html;
     },
-
     /**
      * Rendu page Admin
      */
