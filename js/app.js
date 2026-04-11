@@ -1237,7 +1237,7 @@ const app = {
         const name = prompt(`Nouvel exercice pour la Phase ${phaseId} (${phaseName}) :\nEntrez le nom de l'exercice :`);
         if (!name || name.trim() === '') return;
         
-        const type = confirm('S\\'agit-il d\\'un exercice basé sur des séries/répétitions ?\n(Cliquez OK pour Séries/Reps, ou Annuler pour Isométrique/Temps)') ? 'reps' : 'time';
+        const type = confirm("S'agit-il d'un exercice basé sur des séries/répétitions ?\n(Cliquez OK pour Séries/Reps, ou Annuler pour Isométrique/Temps)") ? 'reps' : 'time';
         
         const exercise = {
             id: 'ex_' + Date.now(),
@@ -1246,7 +1246,7 @@ const app = {
             name: name.trim(),
             type: type,
             targetMuscles: [],
-            steps: ['Effectuer l\\'exercice en contrôlant le mouvement'],
+            steps: ["Effectuer l'exercice en contrôlant le mouvement"],
             restTimer: type === 'time' ? 30 : 60,
             sets: 3,
             reps: type === 'time' ? '30s' : 10
@@ -1259,7 +1259,7 @@ const app = {
             await this.renderProgram();
             await this.renderSeance();
         } catch (e) {
-            NotificationManager.error('Erreur lors de l\\'ajout');
+            NotificationManager.error("Erreur lors de l'ajout");
             console.error(e);
         }
     },
