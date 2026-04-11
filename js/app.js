@@ -1198,10 +1198,16 @@ const app = {
                     <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--text-light)">Phase ${ph.id} — ${ph.name}</div>
                     <button onclick="app.promptAddExercise('${this.currentProgram.id}', ${ph.id}, '${this.escapeHtml(ph.name)}')" style="background:var(--bg);border:1px solid #0891B2;color:#0891B2;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer">+ Ajouter</button>
                 </div>`;
-            exercises.forEach(ex => {
+            exercises.forEach((ex, index) => {
+                const isFirst = index === 0;
+                const isLast = index === exercises.length - 1;
                 html += `<div class="ex-row">
-                    <span>${this.escapeHtml(ex.name)}</span>
-                    <button onclick="app.removeExercise('${ex.id}')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;padding:4px" title="Supprimer cet exercice">🗑️</button>
+                    <span style="flex:1">${this.escapeHtml(ex.name)}</span>
+                    <div style="display:flex;gap:6px">
+                        <button onclick="app.moveExercise('${this.currentProgram.id}', ${ph.id}, '${ex.id}', 'up')" style="background:none;border:none;cursor:${isFirst ? 'default' : 'pointer'};font-size:15px;padding:4px;opacity:${isFirst ? 0.2 : 1}">⬆️</button>
+                        <button onclick="app.moveExercise('${this.currentProgram.id}', ${ph.id}, '${ex.id}', 'down')" style="background:none;border:none;cursor:${isLast ? 'default' : 'pointer'};font-size:15px;padding:4px;opacity:${isLast ? 0.2 : 1}">⬇️</button>
+                        <button onclick="app.removeExercise('${ex.id}')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:15px;padding:4px;margin-left:4px" title="Supprimer cet exercice">🗑️</button>
+                    </div>
                 </div>`;
             });
             html += '</div>';
@@ -1239,6 +1245,9 @@ const app = {
         
         const type = confirm("S'agit-il d'un exercice basé sur des séries/répétitions ?\n(Cliquez OK pour Séries/Reps, ou Annuler pour Isométrique/Temps)") ? 'reps' : 'time';
         
+        const existingEx = await StorageManager.getExercisesByPhase(programId, phaseId);
+        const maxOrder = existingEx.reduce((max, ex) => Math.max(max, ex.order || 0), -1);
+
         const exercise = {
             id: 'ex_' + Date.now(),
             programId: programId,
@@ -1249,7 +1258,8 @@ const app = {
             steps: ["Effectuer l'exercice en contrôlant le mouvement"],
             restTimer: type === 'time' ? 30 : 60,
             sets: 3,
-            reps: type === 'time' ? '30s' : 10
+            reps: type === 'time' ? '30s' : 10,
+            order: maxOrder + 1
         };
 
         try {
@@ -1262,6 +1272,32 @@ const app = {
             NotificationManager.error("Erreur lors de l'ajout");
             console.error(e);
         }
+    },
+
+    async moveExercise(programId, phaseId, exerciseId, direction) {
+        const exercises = await StorageManager.getExercisesByPhase(programId, phaseId);
+        exercises.forEach((ex, i) => { if (typeof ex.order === 'undefined') ex.order = i; });
+        exercises.sort((a, b) => a.order - b.order);
+        
+        const idx = exercises.findIndex(ex => ex.id === exerciseId);
+        if (idx === -1) return;
+        
+        if (direction === 'up' && idx > 0) {
+            const temp = exercises[idx].order;
+            exercises[idx].order = exercises[idx - 1].order;
+            exercises[idx - 1].order = temp;
+        } else if (direction === 'down' && idx < exercises.length - 1) {
+            const temp = exercises[idx].order;
+            exercises[idx].order = exercises[idx + 1].order;
+            exercises[idx + 1].order = temp;
+        } else {
+            return;
+        }
+        
+        await StorageManager.saveExercises(exercises);
+        await this.renderAdmin();
+        await this.renderProgram();
+        await this.renderSeance();
     },
 
     refreshStats() {
