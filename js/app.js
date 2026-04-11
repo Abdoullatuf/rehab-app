@@ -1028,7 +1028,8 @@ const app = {
         // 3. RADAR CHART (Equilibre Musculaire)
         if (radarCanvas && exerciseMap) {
             const zones = this.buildZoneStats(sessions, exerciseMap);
-            const activeZones = zones.filter(z => z.score > 0);
+            // On affiche toutes les zones pour avoir une forme de radar constante
+            const activeZones = zones;
             
             if (activeZones.length > 0) {
                 this._suiviCharts.radar = new Chart(radarCanvas, {
