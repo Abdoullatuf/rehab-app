@@ -1194,9 +1194,15 @@ const app = {
         for (const ph of phases) {
             const exercises = await StorageManager.getExercisesByPhase(this.currentProgram.id, ph.id);
             html += `<div style="margin-bottom:14px">
-                <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--text-light);margin-bottom:6px">Phase ${ph.id} — ${ph.name}</div>`;
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--text-light)">Phase ${ph.id} — ${ph.name}</div>
+                    <button onclick="app.promptAddExercise('${this.currentProgram.id}', ${ph.id}, '${this.escapeHtml(ph.name)}')" style="background:var(--bg);border:1px solid #0891B2;color:#0891B2;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer">+ Ajouter</button>
+                </div>`;
             exercises.forEach(ex => {
-                html += `<div class="ex-row"><span>${ex.name}</span></div>`;
+                html += `<div class="ex-row">
+                    <span>${this.escapeHtml(ex.name)}</span>
+                    <button onclick="app.removeExercise('${ex.id}')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;padding:4px" title="Supprimer cet exercice">🗑️</button>
+                </div>`;
             });
             html += '</div>';
         }
@@ -1212,6 +1218,50 @@ const app = {
         if (!confirm('⚠️ Réinitialiser TOUTES les données ? Cette action est irréversible.')) return;
         await db.delete();
         location.reload();
+    },
+
+    async removeExercise(exerciseId) {
+        if (!confirm('Voulez-vous vraiment supprimer cet exercice ?')) return;
+        const success = await StorageManager.deleteExercise(exerciseId);
+        if (success) {
+            NotificationManager.success('Exercice supprimé');
+            await this.renderAdmin();
+            await this.renderProgram();
+            await this.renderSeance();
+        } else {
+            NotificationManager.error('Erreur lors de la suppression');
+        }
+    },
+
+    async promptAddExercise(programId, phaseId, phaseName) {
+        const name = prompt(`Nouvel exercice pour la Phase ${phaseId} (${phaseName}) :\nEntrez le nom de l'exercice :`);
+        if (!name || name.trim() === '') return;
+        
+        const type = confirm('S\\'agit-il d\\'un exercice basé sur des séries/répétitions ?\n(Cliquez OK pour Séries/Reps, ou Annuler pour Isométrique/Temps)') ? 'reps' : 'time';
+        
+        const exercise = {
+            id: 'ex_' + Date.now(),
+            programId: programId,
+            phaseId: phaseId,
+            name: name.trim(),
+            type: type,
+            targetMuscles: [],
+            steps: ['Effectuer l\\'exercice en contrôlant le mouvement'],
+            restTimer: type === 'time' ? 30 : 60,
+            sets: 3,
+            reps: type === 'time' ? '30s' : 10
+        };
+
+        try {
+            await StorageManager.saveExercise(exercise);
+            NotificationManager.success('Exercice ajouté avec succès');
+            await this.renderAdmin();
+            await this.renderProgram();
+            await this.renderSeance();
+        } catch (e) {
+            NotificationManager.error('Erreur lors de l\\'ajout');
+            console.error(e);
+        }
     },
 
     refreshStats() {
