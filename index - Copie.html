@@ -1,0 +1,2270 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MonProg - Rééducation & Entraînement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0891B2',
+                        'primary-dark': '#164E63',
+                        success: '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Raleway:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg: #ECFEFF;
+            --card: #ffffff;
+            --text: #164E63;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --header-from: #0891B2;
+            --header-to: #164E63;
+            --nav-bg: #ffffff;
+        }
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #e2e8f0;
+            --text-light: #94a3b8;
+            --border: #334155;
+            --header-from: #164E63;
+            --header-to: #0f172a;
+            --nav-bg: #1e293b;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Raleway', sans-serif;
+            padding-bottom: 80px;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--header-from), var(--header-to));
+            color: white;
+            padding: 16px 20px 14px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+        .header-row { display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-family: 'Lora', serif; font-size: 17px; font-weight: 700; margin: 0; }
+        .header p { font-size: 12px; opacity: 0.85; margin: 3px 0 0; }
+        .progress-bar { background: rgba(255,255,255,0.2); border-radius: 99px; height: 6px; margin-top: 10px; overflow: hidden; }
+        .progress-fill { background: #10b981; height: 100%; border-radius: 99px; transition: width 0.5s; }
+        .progress-txt { font-size: 10px; opacity: 0.8; text-align: right; margin-top: 3px; }
+
+        /* Program selector */
+        .prog-bar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .prog-bar label { font-size: 11px; font-weight: 700; color: var(--text-light); white-space: nowrap; text-transform: uppercase; }
+        .prog-bar select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .dark-toggle {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 8px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        /* Bottom nav */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--nav-bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            z-index: 100;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+        }
+        .nav-item {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; gap: 2px; padding: 8px 4px;
+            background: none; border: none; cursor: pointer;
+            color: var(--text-light); font-size: 10px; font-weight: 700;
+            transition: color 0.2s; text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .nav-item.active { color: #0891B2; }
+        .nav-icon { font-size: 20px; }
+
+        /* Content */
+        .content { padding: 16px; max-width: 640px; margin: 0 auto; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .card-title { font-family: 'Lora', serif; font-size: 15px; font-weight: 700; color: var(--text); }
+        .card-body { font-size: 13px; color: var(--text-light); margin-top: 6px; line-height: 1.6; }
+
+        /* Phase badge */
+        .phase-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        /* Exercise */
+        .exercise {
+            background: var(--card);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: border-color 0.2s;
+        }
+        .exercise.completed { border-color: #10b981; background: color-mix(in srgb, #10b981 8%, var(--card)); }
+        .exercise-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 16px; cursor: pointer;
+        }
+        .exercise-check {
+            width: 34px; height: 34px; border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 16px; color: transparent;
+            transition: all 0.25s; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .exercise.completed .exercise-check {
+            background: #10b981; border-color: #10b981; color: white;
+            animation: pop 0.3s ease;
+        }
+        @keyframes pop {
+            0% { transform: scale(0.7); }
+            60% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .exercise-info { flex: 1; min-width: 0; }
+        .exercise-name { font-size: 14px; font-weight: 700; color: var(--text); }
+        .exercise-meta { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+        .exercise-chevron { font-size: 18px; color: var(--text-light); transition: transform 0.2s; flex-shrink: 0; }
+        .exercise.open .exercise-chevron { transform: rotate(180deg); }
+        .exercise-details {
+            display: none;
+            padding: 0 16px 16px;
+            border-top: 1px solid var(--border);
+        }
+        .exercise.open .exercise-details { display: block; }
+        .exercise-details p { font-size: 13px; color: var(--text); margin-top: 12px; line-height: 1.6; }
+        .steps { margin-top: 12px; padding-left: 0; list-style: none; }
+        .steps li {
+            font-size: 13px; color: var(--text-light);
+            padding: 6px 0 6px 28px; position: relative; counter-increment: step;
+        }
+        .steps { counter-reset: step; }
+        .steps li::before {
+            content: counter(step);
+            position: absolute; left: 0; top: 6px;
+            width: 18px; height: 18px;
+            background: #0891B2; color: white;
+            border-radius: 50%; font-size: 9px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .alert-box {
+            border-radius: 8px; padding: 10px 12px;
+            font-size: 12px; margin-top: 10px; line-height: 1.5;
+        }
+        .alert-warning { background: #fed7aa33; border: 1px solid #fdba74; color: #92400e; }
+        .alert-info { background: #dbeafe44; border: 1px solid #93c5fd; color: #1e40af; }
+        [data-theme="dark"] .alert-warning { color: #fbbf24; border-color: #92400e; background: #92400e22; }
+        [data-theme="dark"] .alert-info { color: #60a5fa; border-color: #1e40af; background: #1e40af22; }
+
+
+        /* Rotation indicator */
+        .rotation-banner {
+            background: linear-gradient(135deg, #164E63, #0891B2);
+            color: white;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 4px 16px rgba(8,145,178,0.25);
+        }
+        .rotation-badge {
+            font-family: 'Lora', serif;
+            font-size: 28px;
+            font-weight: 900;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            width: 54px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .rotation-info { flex: 1; }
+        .rotation-label { font-size: 10px; opacity: 0.75; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .rotation-title { font-size: 15px; font-weight: 700; margin-top: 2px; }
+        .rotation-sub { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+        .session-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .micro-stat {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .micro-stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0891B2;
+        }
+        .micro-stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-top: 4px;
+            letter-spacing: 0.4px;
+        }
+        .week-card { margin-bottom: 14px; }
+        .week-title {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #0891B2;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .week-focus {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .week-list {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--text-light);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .week-list li + li { margin-top: 4px; }
+        .match-toggle {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .match-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text-light);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .match-btn.active {
+            border-color: #0891B2;
+            background: #0891B222;
+            color: #0891B2;
+        }
+        .metric-grid {
+            display: grid;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .metric-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 6px;
+        }
+
+        /* Phase selector */
+        .phase-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .phase-btn {
+            padding: 8px 16px; border-radius: 8px; border: 2px solid var(--border);
+            background: var(--card); color: var(--text-light);
+            font-size: 13px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+        }
+        .phase-btn.active {
+            border-color: #0891B2;
+            background: #0891B222;
+            color: #0891B2;
+        }
+
+        /* Timer */
+        .timer-card {
+            background: linear-gradient(135deg, #164E63, #0891B2);
+            border-radius: 16px; padding: 28px; text-align: center;
+            color: white; margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(8,145,178,0.3);
+        }
+        .timer-label { font-size: 11px; opacity: 0.75; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .timer-display {
+            font-family: 'Courier New', monospace; font-size: 64px;
+            font-weight: 900; margin: 12px 0; letter-spacing: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+        .timer-display.done { color: #10b981; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .timer-btns { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+        .timer-btn {
+            padding: 10px 22px; border-radius: 99px; border: none;
+            font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .timer-btn-start { background: white; color: #0891B2; }
+        .timer-btn-pause { background: #fbbf24; color: #78350f; }
+        .timer-btn-reset { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.25); }
+        .timer-presets { display: flex; gap: 8px; margin-top: 16px; justify-content: center; flex-wrap: wrap; }
+        .preset-btn {
+            padding: 7px 14px; border-radius: 99px;
+            background: rgba(255,255,255,0.1); color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .preset-btn:hover, .preset-btn.active { background: rgba(255,255,255,0.25); }
+
+        /* Pain scale */
+        .pain-scale { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+        .pain-btn {
+            width: 38px; height: 38px; border-radius: 50%;
+            border: 2px solid var(--border); background: var(--card);
+            color: var(--text-light); font-size: 13px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .pain-btn.selected { border-color: #0891B2; background: #0891B222; color: #0891B2; transform: scale(1.12); }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+        .stat-value { font-size: 32px; font-weight: 800; color: #0891B2; }
+        .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-light); margin-top: 4px; letter-spacing: 0.5px; }
+
+        /* Calendar */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
+        .cal-head { text-align: center; font-size: 10px; font-weight: 800; color: var(--text-light); text-transform: uppercase; padding: 4px; }
+        .cal-day {
+            aspect-ratio: 1; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 600; color: var(--text-light);
+            background: var(--card); border: 1px solid transparent;
+        }
+        .cal-day.done { background: #10b98122; color: #10b981; border-color: #10b98144; }
+        .cal-day.today { border: 2px solid #0891B2; color: #0891B2; font-weight: 800; }
+        .cal-day.empty { visibility: hidden; }
+
+        /* Admin */
+        .ex-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 12px; background: var(--bg);
+            border-radius: 8px; margin-bottom: 6px; font-size: 13px;
+        }
+        .ex-row span { color: var(--text); font-weight: 600; }
+        .btn-danger {
+            padding: 5px 12px; background: #fee2e2; color: #dc2626;
+            border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;
+        }
+        [data-theme="dark"] .btn-danger { background: #dc262622; color: #f87171; }
+
+        /* Buttons */
+        .btn {
+            display: block; width: 100%; padding: 12px 16px; border: none;
+            border-radius: 10px; font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; text-align: center;
+        }
+        .btn-primary { background: #0891B2; color: white; }
+        .btn-primary:hover { background: #0e7490; }
+        .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+        .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-row .btn { flex: 1; min-width: 130px; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); z-index: 200;
+            overflow-y: auto; padding: 20px;
+        }
+        .modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+        .modal {
+            background: var(--card); border-radius: 16px; padding: 24px;
+            width: 100%; max-width: 540px; margin: auto;
+        }
+        .modal h3 { font-family: 'Lora', serif; font-size: 17px; font-weight: 700; margin-bottom: 18px; color: var(--text); }
+        .form-field { margin-bottom: 12px; }
+        .form-field label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 5px; }
+        .form-field input, .form-field textarea, .form-field select {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid var(--border); border-radius: 8px;
+            background: var(--bg); color: var(--text); font-size: 14px;
+            font-family: 'Raleway', sans-serif;
+        }
+        .form-field textarea { min-height: 90px; resize: vertical; }
+
+        /* Section title */
+        .section-title { font-family: 'Lora', serif; font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: #fefce8; border: 1px solid #fde68a; border-radius: 10px;
+            padding: 12px 14px; font-size: 12px; color: #92400e; margin-bottom: 16px; line-height: 1.6;
+        }
+        [data-theme="dark"] .disclaimer { background: #92400e22; border-color: #92400e; color: #fbbf24; }
+
+        /* Misc */
+        .empty-state { text-align: center; padding: 24px; color: var(--text-light); font-size: 13px; }
+        .mt-3 { margin-top: 12px; }
+        .success-state { text-align: center; padding: 40px 20px; }
+
+        /* YouTube button */
+        .yt-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #ff0000; color: #fff; border: none; border-radius: 6px;
+            padding: 6px 12px; font-size: 12px; font-weight: 600;
+            cursor: pointer; text-decoration: none; margin-top: 8px;
+        }
+        .yt-btn:hover { background: #cc0000; }
+        [data-theme="dark"] .yt-btn { background: #ff3333; }
+
+        /* Series tracker */
+        .series-tracker { margin-top: 12px; }
+        .series-tracker-label {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            color: var(--text-light); display: block; margin-bottom: 8px;
+        }
+        .series-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .series-table th {
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            color: var(--text-light); padding: 4px 4px 6px; text-align: center;
+            letter-spacing: 0.3px;
+        }
+        .series-table th:first-child { text-align: left; width: 36px; }
+        .series-table td { padding: 3px 3px; }
+        .series-table td:first-child {
+            font-size: 12px; font-weight: 800; color: var(--text-light);
+            text-align: center; vertical-align: middle;
+        }
+        .series-input {
+            width: 100%; padding: 7px 6px; border: 1px solid var(--border);
+            border-radius: 6px; background: var(--bg); color: var(--text);
+            font-size: 13px; text-align: center; font-family: 'Raleway', sans-serif;
+            transition: border-color 0.2s;
+        }
+        .series-input:focus { outline: none; border-color: #0891B2; }
+        .series-input::placeholder { color: var(--text-light); opacity: 0.6; font-size: 11px; }
+        .series-input.filled { border-color: #10b98166; background: color-mix(in srgb, #10b981 5%, var(--bg)); }
+        .series-row-remove {
+            background: none; border: none; color: var(--text-light);
+            cursor: pointer; font-size: 16px; padding: 4px; opacity: 0.5;
+            transition: opacity 0.2s, color 0.2s;
+        }
+        .series-row-remove:hover { opacity: 1; color: #dc2626; }
+        .series-add-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: var(--bg); border: 1px dashed var(--border);
+            color: var(--text-light); border-radius: 6px;
+            padding: 6px 12px; font-size: 11px; font-weight: 700;
+            cursor: pointer; margin-top: 6px; transition: all 0.2s;
+        }
+        .series-add-btn:hover { border-color: #0891B2; color: #0891B2; }
+        .series-last-session {
+            font-size: 11px; color: var(--text-light); margin-top: 8px;
+            padding: 8px 10px; background: var(--bg); border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .series-last-session b { color: var(--text); }
+
+        /* Validate button & done row */
+        .series-validate-btn {
+            background: none; border: none; color: var(--text-light);
+            cursor: pointer; font-size: 17px; padding: 2px 4px; opacity: 0.4;
+            transition: opacity 0.2s, color 0.2s;
+        }
+        .series-validate-btn:hover { opacity: 1; color: #10b981; }
+        .series-validate-btn.done { opacity: 1; color: #10b981; }
+        .series-done td { background: color-mix(in srgb, #10b981 7%, var(--bg)); }
+        .series-done .series-input { opacity: 0.65; }
+
+        /* Rest timer banner */
+        .rest-banner {
+            display: none; align-items: center; justify-content: space-between;
+            gap: 10px; margin-top: 10px;
+            background: linear-gradient(135deg, #164E63, #0891B2);
+            border-radius: 10px; padding: 12px 16px; color: white;
+        }
+        .rest-banner.done { background: linear-gradient(135deg, #065f46, #10b981); }
+        .rest-banner-left { display: flex; flex-direction: column; gap: 2px; }
+        .rest-label { font-size: 11px; opacity: 0.8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .rest-serie-label { font-size: 12px; opacity: 0.9; font-weight: 600; }
+        .rest-countdown {
+            font-family: 'Courier New', monospace; font-size: 30px; font-weight: 900;
+            letter-spacing: 3px; font-variant-numeric: tabular-nums;
+        }
+        .rest-skip-btn {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            color: white; border-radius: 6px; padding: 6px 11px;
+            font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .rest-skip-btn:hover { background: rgba(255,255,255,0.25); }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-row">
+        <div>
+            <h1 id="appTitle">MonProg</h1>
+            <p id="appDesc">Sélectionnez un programme</p>
+        </div>
+        <button class="dark-toggle" onclick="toggleDark()" title="Mode sombre">🌙</button>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-txt" id="progressTxt">0% du programme</div>
+</div>
+
+<!-- PROGRAM SELECTOR BAR -->
+<div class="prog-bar">
+    <label>Programme</label>
+    <select id="programSelect" onchange="switchProgram(this.value)">
+        <option value="">-- Choisir --</option>
+    </select>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+    <button class="nav-item active" data-section="programme" onclick="showSection('programme',this)">
+        <span class="nav-icon">📋</span>Programme
+    </button>
+    <button class="nav-item" data-section="seance" onclick="showSection('seance',this)">
+        <span class="nav-icon">⚡</span>Séance
+    </button>
+    <button class="nav-item" data-section="timer" onclick="showSection('timer',this)">
+        <span class="nav-icon">⏱️</span>Chrono
+    </button>
+    <button class="nav-item" data-section="suivi" onclick="showSection('suivi',this)">
+        <span class="nav-icon">📊</span>Suivi
+    </button>
+    <button class="nav-item" data-section="admin" onclick="showSection('admin',this)">
+        <span class="nav-icon">⚙️</span>Admin
+    </button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+    <!-- ======== PROGRAMME ======== -->
+    <div class="tab-pane active" id="section-programme">
+        <div class="disclaimer" id="disclaimer" style="display:none">
+            ⚠️ <strong>Avertissement :</strong> Ce programme est fourni à titre informatif. Consultez votre médecin ou kinésithérapeute avant de commencer. Arrêtez immédiatement en cas de douleur aiguë.
+        </div>
+        <div id="programmeContainer">
+            <div class="empty-state">📋 Sélectionnez un programme pour commencer</div>
+        </div>
+    </div>
+
+    <!-- ======== SEANCE ======== -->
+    <div class="tab-pane" id="section-seance">
+        <div class="section-title">Séance du jour</div>
+        <div class="card">
+            <div class="card-title" style="margin-bottom:10px">Phase active</div>
+            <div class="phase-btns" id="phaseBtns"></div>
+        </div>
+        <div id="seanceInfo"></div>
+        <div id="rotationBanner" class="rotation-banner" style="display:none"></div>
+        <div id="seanceExercises"></div>
+        <div class="success-state" id="seanceDone" style="display:none">
+            <div style="font-size:56px;margin-bottom:12px">🎉</div>
+            <div style="font-size:18px;font-weight:800;color:var(--text)">Séance terminée !</div>
+            <div style="font-size:14px;color:var(--text-light);margin-top:6px">Bravo ! Récupérez bien.</div>
+        </div>
+    </div>
+
+    <!-- ======== TIMER ======== -->
+    <div class="tab-pane" id="section-timer">
+        <div class="section-title">Chronomètre</div>
+        <div class="timer-card">
+            <div class="timer-label" id="timerLabel">Prêt</div>
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            <div class="timer-btns">
+                <button class="timer-btn timer-btn-start" id="timerStartBtn" onclick="toggleTimer()">Démarrer</button>
+                <button class="timer-btn timer-btn-reset" onclick="resetTimer()">Reset</button>
+            </div>
+            <div class="timer-presets">
+                <button class="preset-btn" onclick="setTimer(15,this)">15s</button>
+                <button class="preset-btn" onclick="setTimer(20,this)">20s</button>
+                <button class="preset-btn" onclick="setTimer(30,this)">30s</button>
+                <button class="preset-btn" onclick="setTimer(45,this)">45s</button>
+                <button class="preset-btn" onclick="setTimer(60,this)">60s</button>
+                <button class="preset-btn" onclick="setTimer(90,this)">90s</button>
+                <button class="preset-btn" onclick="setTimer(120,this)">2min</button>
+                <button class="preset-btn" onclick="setTimer(300,this)">5min</button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Temps de repos conseillés</div>
+            <div class="card-body mt-3">
+                <strong>Isométrique / Phase 1 :</strong> 20–30 sec<br>
+                <strong>Renforcement / Phase 2 :</strong> 45–60 sec<br>
+                <strong>Intensif / Phase 3+ :</strong> 60–90 sec<br>
+                <strong>Glaçage post-séance :</strong> 15 min
+            </div>
+        </div>
+    </div>
+
+    <!-- ======== SUIVI ======== -->
+    <div class="tab-pane" id="section-suivi">
+        <div class="section-title">Suivi & Progression</div>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value" id="statSessions">0</div><div class="stat-label">Seances</div></div>
+            <div class="stat-card"><div class="stat-value" id="statStreak">0</div><div class="stat-label">Streak</div></div>
+            <div class="stat-card"><div class="stat-value" id="statTendon">0</div><div class="stat-label">Tendon</div></div>
+            <div class="stat-card"><div class="stat-value" id="statBack">0</div><div class="stat-label">Dos</div></div>
+        </div>
+
+        <div class="card" id="sessionMetricsCard"></div>
+
+        <div class="card">
+            <div class="card-title">Calendrier du mois</div>
+            <div class="cal-grid" id="calendar"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Changer de phase</div>
+            <div class="phase-btns mt-3" id="suiviPhaseBtns"></div>
+        </div>
+    </div>
+
+    <!-- ======== ADMIN ======== -->
+    <div class="tab-pane" id="section-admin">
+        <div class="section-title">⚙️ Administration</div>
+
+        <div class="card">
+            <div class="card-title">Exercices — <span id="adminProgName" style="color:#0891B2">aucun</span></div>
+            <div id="adminExList" class="mt-3"></div>
+            <button class="btn btn-primary mt-3" onclick="openModal()">➕ Ajouter un exercice</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Sauvegarde</div>
+            <div class="btn-row mt-3">
+                <button class="btn btn-primary" onclick="exportProgram()">💾 Export programme</button>
+                <button class="btn btn-primary" onclick="exportProgress()">📥 Export progression</button>
+                <button class="btn btn-secondary" onclick="$('importProg').click()">📤 Import programme</button>
+                <button class="btn btn-secondary" onclick="$('importProg2').click()">📤 Import progression</button>
+                <input type="file" id="importProg" accept=".json" style="display:none" onchange="importProgram(this)">
+                <input type="file" id="importProg2" accept=".json" style="display:none" onchange="importProgress(this)">
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Danger Zone</div>
+            <button class="btn btn-secondary mt-3" style="background:#fee2e2;color:#dc2626;border-color:#fca5a5" onclick="resetAll()">🗑️ Réinitialiser toutes les données</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Infos système</div>
+            <div class="card-body mt-3">
+                <b>Version :</b> 3.0 — Force Full Body<br>
+                <b>Stockage :</b> IndexedDB (Dexie)<br>
+                <b>Programmes chargés :</b> <span id="adminProgCount">0</span>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /content -->
+
+<!-- ======== MODAL AJOUT EXERCICE ======== -->
+<div class="modal-overlay" id="exerciseModal">
+    <div class="modal">
+        <h3>Ajouter un exercice</h3>
+        <div class="form-field">
+            <label>Phase cible</label>
+            <select id="fPhase"></select>
+        </div>
+        <div class="form-field">
+            <label>Nom *</label>
+            <input type="text" id="fName" placeholder="ex: Squat bulgare">
+        </div>
+        <div class="form-field">
+            <label>Séries / Reps / Durée *</label>
+            <input type="text" id="fMeta" placeholder="ex: 4 x 10 rép | Tempo 3-1-2">
+        </div>
+        <div class="form-field">
+            <label>Objectif *</label>
+            <textarea id="fPurpose" placeholder="But de l'exercice..."></textarea>
+        </div>
+        <div class="form-field">
+            <label>Étapes (une par ligne) *</label>
+            <textarea id="fSteps" placeholder="Étape 1&#10;Étape 2&#10;Étape 3"></textarea>
+        </div>
+        <div class="form-field">
+            <label>Image URL (optionnel)</label>
+            <input type="text" id="fMedia" placeholder="https://...">
+        </div>
+        <div class="form-field">
+            <label>Attention (optionnel)</label>
+            <input type="text" id="fWarning" placeholder="ex: Ne pas dépasser 3/10 de douleur">
+        </div>
+        <div class="form-field">
+            <label>Progression (optionnel)</label>
+            <input type="text" id="fProgression" placeholder="ex: Ajouter 2.5kg par semaine">
+        </div>
+        <div class="btn-row mt-3">
+            <button class="btn btn-primary" onclick="saveExercise()">💾 Enregistrer</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// PROGRAM DATA (embedded — no external fetch needed)
+// ─────────────────────────────────────────────────────────────────────────────
+const PROGRAMS = [
+    {
+        id: 'football_recomp_2026',
+        name: 'Football Endurance + Recomp', mediaUrl:'./assets/cat_jambes_1775428794260.png',
+        category: 'Performance & Recomposition',
+        description: '3 seances full body par semaine | 8 semaines | droit femoral et bas du dos integres',
+        duration: 8,
+        sessionsPerWeek: 3,
+        disclaimer: true,
+        phases: [
+            {
+                id: 1,
+                name: 'Seance A - full body force technique', weeks: '1-8',
+                description: 'Base force + cardio modere avec progression douce et dos neutre.',
+                frequency: 'Mercredi',
+                rule: 'Douleur acceptable 0 a 2/10. A 3 a 5/10 on reduit. Au-dela de 5/10 on modifie.',
+                exercises: [
+                    { id:'fr26a0', name:'Echauffement A', mediaUrl:'./assets/cat_mobility.png', meta:'10-12 min | avant seance', purpose:'Preparer hanches, tronc et epaules avant les charges.', steps:['5 min de velo tranquille','Mobilite douce hanches, chevilles et epaules','Bird dog 2 x 6 par cote','Dead bug 2 x 6 par cote','2 series legeres du premier exercice'] },
+                    { id:'fr26a1', name:'Presse a cuisses', mediaUrl:'./assets/leg_press.png', meta:'4 x 8 | repos 2 min', purpose:'Travailler les quadriceps sans grosse charge axiale sur le dos.', steps:['Regler le siege pour garder le bassin stable','Descendre controle jusqu a une amplitude confortable','Ne pas ecraser le bas du dos en bas du mouvement','Pousser fort sans verrouiller brutalement les genoux'], progression:'Commencer vers 50 kg si propre, puis monter de 2,5 a 5 kg quand les 4 series passent.', warning:'Si douleur dos ou tendon > 3/10, reduire charge ou amplitude.' },
+                    { id:'fr26a2', name:'Developpe couche halteres ou chest press', mediaUrl:'./assets/benchpress_illustration_1775427787141.png', meta:'4 x 6 a 8 | repos 2 min', purpose:'Construire la force du haut du corps sans fatigue inutile.', steps:['Pieds stables au sol et omoplates serrees','Descendre controle','Pousser fort sans perdre la trajectoire','Garder 1 a 2 reps de marge'], progression:'Rester aux halteres de 16 kg tant que la fourchette haute n est pas propre.', warning:'Arreter avant l echec musculaire.' },
+                    { id:'fr26a3', name:'Rowing assis poulie', mediaUrl:'./assets/rowing_cable.png', meta:'4 x 8 a 10 | repos 90 sec', purpose:'Renforcer le dos et l equilibre poussee / tirage.', steps:['Buste stable et poitrine ouverte','Tirer les coudes vers l arriere','Serrer les omoplates 1 sec','Revenir lentement'], progression:'Ajouter un peu de charge quand 4 x 10 sont propres.' },
+                    { id:'fr26a4', name:'Hip thrust machine ou barre guidee', mediaUrl:'./assets/hip_thrust.png', meta:'3 x 8 a 10 | repos 90 sec', purpose:'Renforcer les fessiers pour proteger le bas du dos.', steps:['Monter le bassin en gardant les cotes rentrees','Marquer 1 a 2 sec en haut','Redescendre sans perdre le controle'], progression:'Monter progressivement si aucune gene lombaire.' },
+                    { id:'fr26a5', name:'Tirage vertical', mediaUrl:'./assets/pullup.png', meta:'3 x 8 a 10 | repos 90 sec', purpose:'Donner du volume au dos et soutenir les tractions.', steps:['Poitrine sortie et epaules basses','Tirer les coudes vers les hanches','Revenir controle en haut'] },
+                    { id:'fr26a6', name:'Pallof press', mediaUrl:'./assets/cat_core.png', meta:'3 x 10 par cote | repos 45 sec', purpose:'Stabiliser le tronc sans flexion ni extension agressive.', steps:['Se placer de profil au cable','Pousser les mains devant soi sans tourner','Tenir 1 sec puis revenir'], warning:'Si le dos vrille ou bouge, diminuer la charge.' },
+                    { id:'fr26a7', name:'Cardio zone 2', mediaUrl:'./assets/cat_cardio_1775428827460.png', meta:'12 a 15 min | velo ou elliptique', purpose:'Ameliorer l endurance utile au football sans stress excessif.', steps:['Rester a intensite moderee','Tu dois pouvoir parler en phrases courtes','Sortir de seance plus chaud, pas epuise'] }
+                ]
+            },
+            {
+                id: 2,
+                name: 'Seance B - hypertrophie protegee', weeks: '1-8',
+                description: 'Volume utile, travail unilateral prudent et intervalles controles.',
+                frequency: 'Samedi',
+                rule: 'Les fentes ne passent que si tendon et dos restent calmes le jour meme et le lendemain.',
+                exercises: [
+                    { id:'fr26b0', name:'Echauffement B', mediaUrl:'./assets/cat_mobilite_1775428838872.png', meta:'10-12 min | avant seance', purpose:'Preparer les jambes et le tronc a un travail plus volumineux.', steps:['5 min de velo','Montees de genoux douces sans impact','Mobilite de hanches','Planche laterale 2 x 20 sec par cote'] },
+                    { id:'fr26b1', name:'Hack squat ou presse inclinee', mediaUrl:'./assets/leg_press.png', meta:'3 x 10 | repos 2 min', purpose:'Monter le volume quadriceps dans un cadre stable.', steps:['Garder le bassin colle au support','Descendre controle','Monter sans a-coup','Ne pas chercher la charge max'], progression:'Ajouter des reps puis un peu de charge quand la technique reste propre.' },
+                    { id:'fr26b2', name:'Developpe incline machine ou halteres', mediaUrl:'./assets/benchpress_illustration_1775427787141.png', meta:'3 x 8 a 10 | repos 90 sec', purpose:'Volume du haut du corps avec bonne stabilite.', steps:['Appuis solides','Descente controlee','Poussee reguliere','Rester a 1 ou 2 reps de l echec'] },
+                    { id:'fr26b3', name:'Rowing poitrine appuyee', mediaUrl:'./assets/rowing_cable.png', meta:'3 x 10 | repos 90 sec', purpose:'Tirer sans fatigue lombaire excessive.', steps:['Poitrine appuyee au support','Tirer les coudes vers l arriere','Controler le retour'] },
+                    { id:'fr26b4', name:'Leg curl assis ou couche', mediaUrl:'./assets/cat_jambes_1775428794260.png', meta:'3 x 10 a 12 | repos 75 sec', purpose:'Renforcer les ischios pour equilibrer le travail des quadriceps.', steps:['Contracter fort en fin de flexion','Redescendre lentement','Eviter tout mouvement parasite du bassin'] },
+                    { id:'fr26b5', name:'Split squat ou fente arriere legere', mediaUrl:'./assets/cat_jambes_1775428794260.png', meta:'2 a 3 x 8 par jambe | repos 75 sec', purpose:'Stabilite unilaterale et controle de bassin.', steps:['Commencer au poids du corps ou leger','Descendre sans impact','Garder le buste stable','Pousser par le pied avant'], progression:'N augmenter la charge que si aucune gene notable n apparait le lendemain.', warning:'A supprimer si le tendon ou le dos reagit.' },
+                    { id:'fr26b6', name:'Elevations laterales', mediaUrl:'./assets/cat_arms.png', meta:'3 x 12 a 15 | repos 45 sec', purpose:'Volume deltoides sans fatigue systemique importante.', steps:['Monter les bras jusqu a la ligne des epaules','Controler la descente','Ne pas hausser les epaules'] },
+                    { id:'fr26b7', name:'Planche laterale', mediaUrl:'./assets/cat_core.png', meta:'3 x 20 a 30 sec par cote', purpose:'Stabilite laterale du tronc et protection lombaire.', steps:['Aligner tete, bassin et chevilles','Garder les hanches hautes','Respirer normalement'] },
+                    { id:'fr26b8', name:'Intervalles controles', mediaUrl:'./assets/cat_cardio_1775428827460.png', meta:'8 x 30 sec modere/rapide + 60 sec facile', purpose:'Travailler le cardio football sans faire de sprint maximal.', steps:['Faire les repetitions au velo','Rester propre techniquement','Ne pas transformer cela en sprint max'] }
+                ]
+            },
+            {
+                id: 3,
+                name: 'Seance C - endurance musculaire', weeks: '1-8',
+                description: 'Capacite de travail, volume controle et cardio de fin de seance.',
+                frequency: 'Dimanche',
+                rule: 'Toujours garder 2 repetitions de marge sur les pompes et les tirages.',
+                exercises: [
+                    { id:'fr26c0', name:'Echauffement C', mediaUrl:'./assets/cat_mobilite_1775428838872.png', meta:'10-12 min | avant seance', purpose:'Preparer une seance orientee endurance musculaire.', steps:['5 min de rameur leger ou velo','Dead bug 2 x 6','Bird dog 2 x 6','Squat poids du corps 2 x 8'] },
+                    { id:'fr26c1', name:'Goblet squat ou presse legere', mediaUrl:'./assets/squat_illustration_1775427762074.png', meta:'3 x 12 | repos 90 sec', purpose:'Volume quadriceps en restant loin des charges lourdes.', steps:['Tenir l haltere contre la poitrine ou choisir une presse legere','Descendre avec controle','Monter sans perdre le gainage'] },
+                    { id:'fr26c2', name:'Pompes', mediaUrl:'./assets/pushup.png', meta:'3 series avec 2 reps de marge | repos 75 sec', purpose:'Endurance musculaire du haut du corps.', steps:['Corps gaine','Descendre proprement','S arreter 2 reps avant l echec'], progression:'Quand 3 series deviennent faciles, monter doucement le total de reps.' },
+                    { id:'fr26c3', name:'Tractions assistees ou tirage vertical', mediaUrl:'./assets/pullup.png', meta:'3 x 6 a 8 | repos 90 sec', purpose:'Renforcer le tirage vertical dans une zone de travail propre.', steps:['Epaules basses','Tirer sans balancer','Revenir lentement'] },
+                    { id:'fr26c4', name:'Rowing poulie basse', mediaUrl:'./assets/rowing_cable.png', meta:'3 x 12 | repos 75 sec', purpose:'Augmenter la capacite de travail du dos avec stress lombaire faible.', steps:['Poitrine ouverte','Trajet controle','Retour lent'] },
+                    { id:'fr26c5', name:'Pull-through poulie ou extension 45 degres legere', mediaUrl:'./assets/cat_jambes_1775428794260.png', meta:'2 a 3 x 12 | repos 60 sec', purpose:'Travailler la charniere hanche-tronc sans deadlift lourd.', steps:['Garder un dos neutre','Bouger depuis les hanches','Finir avec les fessiers'], warning:'Si le dos tire en fin d amplitude, reduire la charge et l amplitude.' },
+                    { id:'fr26c6', name:'Curl biceps + extension triceps poulie', mediaUrl:'./assets/bicep_curl.png', meta:'2 x 12 a 15 de chaque | repos 45 sec', purpose:'Petit volume bras sans fatigue excessive.', steps:['Execution propre','Controle sur toute l amplitude','Pas de triche du buste'] },
+                    { id:'fr26c7', name:'Cardio progressif', mediaUrl:'./assets/cat_cardio_1775428827460.png', meta:'10 min | 1 min moderee / 1 min plus rapide x 5', purpose:'Finir la seance avec un effort cardio utile et controlable.', steps:['Rester en controle respiratoire','Si match de foot prevu, reduire ce bloc','Sortir de seance plus fatigue cardio que musculaire'] },
+                    { id:'fr26c8', name:'Routine tendon / dos', mediaUrl:'./assets/bird_dog.png', meta:'8 min | apres seance ou jours off', purpose:'Entretenir la progression du droit femoral et du bas du dos.', steps:['Leg extension isometrique 4 x 20 a 30 sec','Bird dog 2 x 6 par cote','Dead bug 2 x 6 par cote','McGill curl-up modifie 2 x 8','Marche 10 a 20 min si possible'] }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'force_fullbody',
+        name: 'Force Full Body — Personnalisé',
+        category: 'Force & Performance',
+        description: 'Programme 3 séances/semaine alternées A/B/C | 12 semaines | Bas du dos & droit fémoral intégrés',
+        duration: 12,
+        phases: [
+            {
+                id: 1, name: 'Séance A — Full Body Bas du Corps', weeks: '1–12',
+                description: 'Accent quadriceps, chaîne postérieure et renforcement progressif du bas du dos.',
+                frequency: 'Rotation A → B → C (1 séance sur 3)',
+                rule: 'Douleur max 2/10 sur tous les exercices',
+                exercises: [
+                    { id:'fb1e1', name:'Squat haltères / barre', mediaUrl:'./assets/squat_illustration_1775427762074.png',
+                      meta:'Ph 1–4 : 4×6 | Ph 5–8 : 4×5 | Ph 9–12 : 5×5',
+                      purpose:'Exercice roi du bas du corps : quadriceps, fessiers, chaîne postérieure. Progression charge linéaire.',
+                      steps:["Pieds largeur d'épaules, orteils légèrement ouverts","Haltères à l'épaule ou barre position haute","Inspirer, gainage fort — descendre contrôlé 3 sec jusqu'à parallèle","Genoux dans l'axe des pieds — jamais vers l'intérieur","Pousser fort dans le sol, expirer en remontant"],
+                      progression:'Augmenter de 2,5 kg quand les séries sont maîtrisées (≤ RPE 8).',
+                      warning:'Dos toujours neutre — ne jamais arrondir les lombaires sous charge.' },
+                    { id:'fb1e2', name:'Soulevé de terre roumain', mediaUrl:'./assets/deadlift_illustration_1775427773855.png',
+                      meta:'3×8 rép | Tempo 3-1-2 | Poids modéré',
+                      purpose:'Renforcer ischio-jambiers, fessiers et érecteurs du rachis. Clé pour le bas du dos sans compression.',
+                      steps:["Debout, haltères ou barre devant les cuisses","Légère flexion des genoux fixe tout au long","Pencher le buste dos plat — hanches poussées vers l'arrière","Descendre jusqu'à mi-tibia en sentant l'étirement des ischios","Remonter en contractant les fessiers et poussant les hanches en avant"],
+                      progression:'Commencer à 50–60 % du max. Augmenter 2,5 kg/semaine si douleur dos = 0/10.',
+                      warning:'Jamais arrondir le bas du dos. Réduire l\'amplitude si gêne lombaire.' },
+                    { id:'fb1e3', name:'Leg press', mediaUrl:'./assets/leg_press.png',
+                      meta:'3×10–12 rép | Tempo 3-1-2',
+                      purpose:'Force quadriceps sans charge axiale sur le dos. Idéal pour travailler le droit fémoral droit en sécurité.',
+                      steps:["Assis, pieds à largeur d'épaules sur la plateforme","Descendre contrôlé 3 sec jusqu'à 90° de flexion","Ne jamais verrouiller les genoux en extension","Pousser fort pour remonter — les deux jambes symétriquement","Vérifier que le genou droit ne dévie pas vers l'intérieur"],
+                      progression:'Augmenter de 5–10 kg quand 3 séries sont confortables.' },
+                    { id:'fb1e4', name:'Tirage horizontal câble / haltère', mediaUrl:'./assets/rowing_cable.png',
+                      meta:'4×10 rép | Tempo 2-1-3',
+                      purpose:'Équilibre poussée/tirage. Renforce dos, rhomboïdes et correcteurs posturaux.',
+                      steps:["Saisir la poignée ou l'haltère à hauteur de poitrine","Dos légèrement incliné, gainage actif","Tirer en ramenant les coudes près du corps — épaules basses","Serrer les omoplates 1 sec en fin de mouvement","Revenir lentement 3 sec — bras presque tendus"] },
+                    { id:'fb1e5', name:'Pont fessier unilatéral', mediaUrl:'./assets/glute_bridge.png',
+                      meta:'3×10 rép par jambe | Tempo 2-2-2',
+                      purpose:'Renforcer les fessiers en unilatéral — corrige les déséquilibres D/G et soulage le bas du dos.',
+                      steps:["Allongé sur le dos, un genou fléchi, l'autre jambe tendue vers le plafond","Serrer le fessier porteur et soulever le bassin","Maintenir 2 sec — bassin parfaitement horizontal","Redescendre lentement 2 sec","Compléter toutes les reps d'un côté, puis changer"],
+                      progression:'Ajouter un élastique sur les hanches quand le geste est maîtrisé.' },
+                    { id:'fb1e6', name:'Gainage planche avec variation', mediaUrl:'./assets/plank_illustration_1775427797986.png',
+                      meta:'3×30–45 sec | Repos 30 sec',
+                      purpose:'Stabiliser le tronc et protéger le bas du dos lors des charges lourdes.',
+                      steps:["Appui sur avant-bras, corps parfaitement aligné","Pas de creux dorsal ni de fesses en l'air","Contracter abdos + fessiers + quadriceps simultanément","Respirer régulièrement — ne jamais bloquer","Variation : lever alternativement un bras ou une jambe"],
+                      progression:'Augmenter de 5 sec/semaine ou passer à la planche avec élévation.' }
+                ]
+            },
+            {
+                id: 2, name: 'Séance B — Full Body Haut du Corps', weeks: '1–12',
+                description: 'Accent pectoraux, dos, épaules et bras. Séance équilibrée poussée / tirage.',
+                frequency: 'Rotation A → B → C (1 séance sur 3)',
+                exercises: [
+                    { id:'fb2e1', name:'Développé couché haltères / barre', mediaUrl:'./assets/benchpress_illustration_1775427787141.png',
+                      meta:'Ph 1–4 : 4×8 | Ph 5–8 : 4×5 | Ph 9–12 : 5×3–5',
+                      purpose:'Développer la force des pectoraux, deltoïdes antérieurs et triceps.',
+                      steps:["Allongé sur banc plat, pieds fermement au sol","Barre ou haltères à hauteur des pectoraux, coudes à 45–75° du buste","Inspirer — descendre contrôlé 3 sec jusqu'à effleurer la poitrine","Pousser explosif en expirant — verrouillage partiel des coudes en haut","Omoplates rétractées et déprimées tout au long"],
+                      progression:'Augmenter de 2,5 kg par semaine si technique parfaite et RPE ≤ 8.' },
+                    { id:'fb2e2', name:'Tractions / Lat pulldown', mediaUrl:'./assets/pullup.png',
+                      meta:'4×6–8 rép',
+                      purpose:'Développer la largeur du dos (grand dorsal). Exercice fondamental de tirage vertical.',
+                      steps:["Saisir la barre en pronation, écart légèrement plus large que les épaules","Partir bras tendus — ne pas tricher avec les épaules","Tirer en amenant les coudes vers les hanches, poitrine vers la barre","Omoplates abaissées et rétractées en bas du mouvement","Revenir lentement 3 sec jusqu'à extension complète"],
+                      progression:'Tractions impossible → lat pulldown → tractions assistées → tractions lestées.' },
+                    { id:'fb2e3', name:'Développé militaire haltères', mediaUrl:'./assets/cat_arms.png',
+                      meta:'3×8–10 rép | Tempo 2-1-2',
+                      purpose:'Renforcer les deltoïdes et stabiliser les épaules. Améliore la posture et le gainage du buste.',
+                      steps:["Assis ou debout, haltères à hauteur des épaules, paumes vers l'avant","Gainage fort — pousser les haltères au-dessus de la tête","Terminer bras tendus, biceps proches des oreilles","Redescendre contrôlé 2 sec","Jamais cambrer le dos — si cambrure, réduire le poids"],
+                      warning:'Dos neutre impératif. La cambrure lombaire est la cause n°1 de blessure sur cet exercice.' },
+                    { id:'fb2e4', name:'Rowing haltère unilatéral', mediaUrl:'./assets/rowing_cable.png',
+                      meta:'3×10 rép par bras | Tempo 2-1-3',
+                      purpose:'Renforcer le grand dorsal en unilatéral. Corrige les déséquilibres gauche-droite.',
+                      steps:["Un genou et une main sur le banc — buste parallèle au sol","Saisir l'haltère, bras tendu vers le bas","Tirer en ramenant le coude au-dessus du buste (pas vers l'extérieur)","Maintenir 1 sec en haut","Redescendre lentement 3 sec jusqu'à extension complète"] },
+                    { id:'fb2e5', name:'Dips ou Pushdown triceps', mediaUrl:'./assets/cat_arms.png',
+                      meta:'3×10–12 rép',
+                      purpose:'Isoler les triceps — essentiel pour progresser sur le développé couché.',
+                      steps:["Dips : appui sur barres parallèles, descendre jusqu'à 90° de flexion du coude","Ou Pushdown câble : coudes fixes le long du buste, pousser vers le bas","Contrôler la descente 2 sec","Extension complète en bas — 1 sec de contraction","Revenir lentement"] },
+                    { id:'fb2e6', name:'Curl biceps haltères alternés', mediaUrl:'./assets/bicep_curl.png',
+                      meta:'3×12 rép',
+                      purpose:'Isoler les biceps et renforcer les fléchisseurs du coude.',
+                      steps:["Debout, haltères dans chaque main, paumes vers l'avant","Fléchir un bras en supinant le poignet en haut","Maintenir 1 sec — redescendre lentement 2 sec","Alterner les bras","Coudes fixes contre le corps — ne pas tricher avec les épaules"] }
+                ]
+            },
+            {
+                id: 3, name: 'Séance C — Renforcement Ciblé & Récupération Active', weeks: '1–12',
+                description: 'Renforcement bas du dos + droit fémoral droit + mobilité. Séance complémentaire essentielle.',
+                frequency: 'Rotation A → B → C (1 séance sur 3)',
+                rule: 'Priorité qualité d\'exécution — douleur max 2/10',
+                exercises: [
+                    { id:'fb3e1', name:'Squat bulgare', mediaUrl:'./assets/squat_illustration_1775427762074.png',
+                      meta:'3×8–10 rép par jambe | Tempo 3-1-2',
+                      purpose:'Renforcement intensif du quadriceps (droit fémoral) en position étirée. Corrige les déséquilibres D/G.',
+                      steps:["Pied arrière posé sur un banc (à hauteur de genou environ)","Pied avant stable, à 60–70 cm du banc","Descendre lentement 3 sec — sentir l'étirement à l'avant de la hanche côté arrière","Maintenir 1 sec en bas","Pousser sur le talon du pied avant pour remonter en 2 sec"],
+                      progression:'Sans poids → haltères 2 kg → 4 kg → 6 kg. Progresser lentement côté droit.',
+                      warning:'Commencer par le côté DROIT pour égalité d\'effort. Douleur droit fémoral > 2/10 : arrêter.' },
+                    { id:'fb3e2', name:'Extension genou excentrique — droit fémoral', mediaUrl:'./assets/cat_legs.png',
+                      meta:'3×10 rép | Descente 4 sec',
+                      purpose:'Renforcement excentrique du droit fémoral droit — méthode la plus efficace pour la prévention tendineuse.',
+                      steps:["Assis sur banc ou machine, pieds ne touchant pas le sol","Tendre les deux jambes simultanément (concentrique assisté)","Descendre UNIQUEMENT avec la jambe droite — très lentement 4 sec","Remonter avec l'aide de la jambe gauche","Répéter — la fatigue du droit fémoral droit doit être progressive"],
+                      progression:'Sem 1–4 : 3×8 sans lest | Sem 5–8 : 3×10 + 0,5 kg | Sem 9–12 : 3×10 + 1–1,5 kg.',
+                      warning:'Exercice prioritaire. Douleur > 3/10 : réduire le lest ou l\'amplitude.' },
+                    { id:'fb3e3', name:'Hip thrust', mediaUrl:'./assets/hip_thrust.png',
+                      meta:'4×12 rép | Pause 2 sec en haut',
+                      purpose:'Activation maximale des fessiers — protège les disques lombaires et renforce la chaîne postérieure.',
+                      steps:["Dos appuyé sur le bord d'un banc, épaules au niveau du bord supérieur","Barre sur les hanches (avec pad/serviette) ou haltère sur le bas du ventre","Pousser les hanches vers le haut — contracter les fessiers au maximum","Maintenir 2 sec en haut — vérifier symétrie D/G","Redescendre lentement 2 sec — ne pas toucher le sol complètement"],
+                      progression:'Commencer poids de corps → barre seule → ajouter 5–10 kg/semaine.' },
+                    { id:'fb3e4', name:'Bird-dog lent', mediaUrl:'./assets/bird_dog.png',
+                      meta:'3×10 rép par côté | Tempo 3-3-3',
+                      purpose:'Renforcer les stabilisateurs lombaires profonds sans compression — le meilleur exercice pour le bas du dos.',
+                      steps:["À quatre pattes, mains sous les épaules, genoux sous les hanches","Étendre lentement le bras droit et la jambe gauche simultanément (3 sec)","Maintenir 3 sec — dos parfaitement plat, pas de rotation du bassin","Revenir lentement 3 sec au centre","Alterner les côtés avec gainage parfait"],
+                      progression:'Ajouter des lests aux chevilles (0,5–1 kg) quand 3×10 est facile.' },
+                    { id:'fb3e5', name:'Gainage latéral avec rotation', mediaUrl:'./assets/cat_core.png',
+                      meta:'3×8 rép par côté',
+                      purpose:'Renforcer les obliques et la stabilité latérale du rachis. Prévient les blessures lombaires.',
+                      steps:["Planche latérale sur avant-bras, corps aligné","Passer le bras libre sous le corps en rotation contrôlée","Revenir en dérotant lentement à la position de départ","Hanches stables et hautes pendant toute la rotation","Alterner les côtés après toutes les reps"] },
+                    { id:'fb3e6', name:'Étirement actif psoas-quadriceps', mediaUrl:'./assets/cat_mobility.png',
+                      meta:'3×30 sec par côté',
+                      purpose:'Libérer les fléchisseurs de hanche — essentiel pour le droit fémoral et le bas du dos.',
+                      steps:["Position chevalier servant (genou droit au sol)","Avancer doucement le bassin vers l'avant","Contracter simultanément abdominaux et fessier du côté genou au sol","Sentir un étirement doux à l'avant de la hanche (jamais douloureux)","Maintenir 30 sec en respirant profondément"],
+                      warning:'Étirement du droit fémoral droit : toujours DOUX. Ne jamais forcer.' }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'rehab_femoral',
+        name: 'Rééducation — Droit Fémoral', mediaUrl:'./assets/cat_mobilite_1775428838872.png',
+        category: 'Réhabilitation',
+        description: 'Tendinopathie proximale | 12 semaines',
+        duration: 12,
+        disclaimer: true,
+        phases: [
+            {
+                id: 1, name: 'Soulagement & Activation', weeks: '1–3',
+                description: 'Réduire la douleur, activer le muscle sans stress sur le tendon.',
+                frequency: '1×/jour, 5–7 jours/semaine', rule: 'Douleur max 3/10',
+                exercises: [
+                    { id:'rf1e1', name:'Isométrique mural', mediaUrl:'./assets/wall_sit.png', meta:'5 × 30–45 sec | Repos 30 sec',
+                      purpose:'Activer le droit fémoral sans mouvement articulaire.',
+                      steps:['Dos contre un mur, pieds à 50 cm','Descendre en position «chaise» (60° de flexion)','Maintenir 30–45 secondes','Pousser fort dans le sol','Repos 30 sec entre séries'],
+                      warning:'Si douleur hanche > 3/10, remonter un peu la position.' },
+                    { id:'rf1e2', name:'Isométrique flexion hanche', mediaUrl:'./assets/cat_legs.png', meta:'5 × 20 sec | Repos 20 sec',
+                      purpose:'Activer le droit fémoral dans sa fonction de fléchisseur de hanche.',
+                      steps:['Debout, dos contre un mur','Lever le genou droit à 45°','Placer les mains sur le genou, pousser vers le bas','Résister avec la cuisse (genou immobile)','Maintenir 20 sec à 50 % de force max'],
+                      progression:"Augmenter l'intensité progressivement (60 %, 70 %, 80 %)." },
+                    { id:'rf1e3', name:'Pont fessier', mediaUrl:'./assets/glute_bridge.png', meta:'3 × 12 rép',
+                      purpose:'Renforcer la chaîne postérieure pour équilibrer et soulager la hanche.',
+                      steps:['Allongé sur le dos, genoux fléchis','Serrer les fessiers et soulever le bassin','Alignement épaules–hanches–genoux','Maintenir 3 sec en haut','Redescendre lentement (3 sec)'] },
+                    { id:'rf1e4', name:'Gainage ventral', mediaUrl:'./assets/plank_illustration_1775427797986.png', meta:'3 × 30 sec | Repos 30 sec',
+                      purpose:"Stabiliser le bassin et réduire le stress sur l'insertion tendineuse.",
+                      steps:['Appui sur avant-bras et pointes de pieds','Corps parfaitement aligné','Serrer les abdos, «rentrer le nombril»','Maintenir 30 sec en respirant normalement'] }
+                ]
+            },
+            {
+                id: 2, name: 'Renforcement progressif', weeks: '4–6',
+                description: 'Renforcer le droit fémoral en charge progressive.',
+                frequency: '1 jour sur 2 (3–4×/semaine)', rule: 'Douleur max 2/10',
+                exercises: [
+                    { id:'rf2e1', name:'Squat partiel', mediaUrl:'./assets/squat_illustration_1775427762074.png', meta:'4 × 12 rép | Tempo 3-1-3',
+                      purpose:'Renforcement fonctionnel du quadriceps.',
+                      steps:["Debout, pieds largeur d'épaules","Descendre lentement (3 sec) jusqu'à 45° de flexion",'Pause 1 sec','Remonter lentement (3 sec)','Ne pas dépasser 90° de flexion'],
+                      progression:'Ajouter du poids (sac à dos, haltères) quand 4 × 12 est aisé.' },
+                    { id:'rf2e2', name:'Fente avant statique', mediaUrl:'./assets/cat_legs.png', meta:'3 × 10 par jambe | Tempo 3-1-2',
+                      purpose:'Renforcer le droit fémoral en position allongée.',
+                      steps:['Position fendue, pied avant en avant','Descendre lentement (3 sec)','Le genou arrière effleure le sol','Pause 1 sec','Remonter en 2 sec'],
+                      warning:'Le genou avant ne doit pas dépasser la pointe du pied.' },
+                    { id:'rf2e3', name:'Extension genou excentrique', mediaUrl:'./assets/cat_legs.png', meta:'4 × 8 rép | Descente 5 sec',
+                      purpose:'Renforcement excentrique du quadriceps — essentiel pour la guérison tendineuse.',
+                      steps:['Assis sur une chaise haute, pieds ne touchant pas le sol','Tendre la jambe droite (aidé de la gauche si besoin)','Descendre très lentement en 5 sec sans aide',"Remonter avec l'aide de l'autre jambe"],
+                      progression:'Ajouter du lest progressivement : 0,5 kg → 1 kg → 1,5 kg → 2 kg.' }
+                ]
+            },
+            {
+                id: 3, name: 'Renforcement intensif & Pliométrie', weeks: '7–9',
+                description: 'Préparer le tendon aux contraintes explosives.',
+                frequency: '3×/semaine (jours alternés)', rule: 'Douleur max 3/10',
+                exercises: [
+                    { id:'rf3e1', name:'Squat bulgare', mediaUrl:'./assets/squat_illustration_1775427762074.png', meta:'4 × 8 par jambe | Tempo 3-1-1',
+                      purpose:'Renforcement intensif du quadriceps en étirement du droit fémoral.',
+                      steps:['Pied arrière posé sur un banc derrière soi','Pied avant stable devant','Descendre lentement (3 sec)',"Sentir l'étirement à l'avant de la hanche",'Remonter en 1 sec'],
+                      progression:'Ajouter des haltères : 2 kg → 4 kg → 6 kg → 8 kg.' },
+                    { id:'rf3e2', name:'Reverse Nordic Curl', mediaUrl:'./assets/cat_legs.png', meta:'3 × 6 rép | Descente 5 sec',
+                      purpose:'Exercice roi pour la rééducation du droit fémoral — charge excentrique maximale.',
+                      steps:['À genoux sur un tapis, pieds à plat derrière soi','Corps droit des genoux aux épaules',"Se pencher très lentement vers l'arrière (5 sec)","Hanches bien tendues — ne pas s'asseoir sur les talons",'Utiliser les mains pour remonter si nécessaire'],
+                      warning:'Exercice très exigeant — commencer avec petite amplitude.' },
+                    { id:'rf3e3', name:'Sauts sur place', mediaUrl:'./assets/cat_cardio.png', meta:'3 × 10 sauts | Repos 60 sec',
+                      purpose:'Réintroduire les contraintes explosives progressivement.',
+                      steps:["Pieds largeur d'épaules",'Petit squat puis saut vertical','Atterrir en douceur, genoux fléchis',"Absorber l'impact en fléchissant",'Enchaîner les sauts sans précipitation'],
+                      progression:'Semaine 7 : sauts sur place → Semaine 8 : sauts en déplacement → Semaine 9 : unipodaux.' }
+                ]
+            },
+            {
+                id: 4, name: 'Retour au football', weeks: '10–12',
+                description: 'Retrouver le geste sportif complet progressivement.',
+                frequency: '3×/semaine sport + 2× renforcement',
+                exercises: [
+                    { id:'rf4e1', name:'Conduite de balle & passes courtes', mediaUrl:'./assets/cat_cardio.png', meta:'Semaine 10 | 20 min',
+                      purpose:'Premier contact balle à faible intensité.',
+                      steps:['Conduite lente sur 20 m (aller-retour)','Passes courtes intérieur du pied à 5–10 m (30 % intensité)','Pas de frappe cou-de-pied ni passe enveloppée','Jonglage léger si pas de douleur'] },
+                    { id:'rf4e2', name:'Frappes progressives', mediaUrl:'./assets/cat_cardio.png', meta:'Semaine 11 | 15 min',
+                      purpose:'Réintroduire progressivement le geste de frappe.',
+                      steps:['Passes longues intérieur du pied à 15–20 m : 40 %','Frappe cou-de-pied dans un but à 10 m : 30 % → 50 %','Augmenter de 10 % par séance si 0 douleur',"Arrêter dès la moindre gêne au pli de l'aine"],
+                      warning:'La passe enveloppée est le DERNIER geste à reprendre.' }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'renfo_jambes',
+        name: 'Force — Jambes Complètes', mediaUrl:'./assets/cat_jambes_1775428794260.png',
+        category: 'Force & Hypertrophie',
+        description: 'Développer force et masse des jambes | 8 semaines',
+        duration: 8,
+        phases: [
+            {
+                id: 1, name: 'Activation & Fondamentaux', weeks: '1–2',
+                description: 'Maîtriser les mouvements de base avec bonne technique.',
+                frequency: '4×/semaine',
+                exercises: [
+                    { id:'rj1e1', name:'Squat goblet', mediaUrl:'./assets/squat_illustration_1775427762074.png', meta:'4 × 10–12 rép | Tempo 3-1-2',
+                      purpose:'Activation du quadriceps avec bonne mécanique articulaire.',
+                      steps:['Tenir un haltère ou kettlebell à la poitrine',"Pieds largeur d'épaules, orteils légèrement ouverts","Descendre contrôlé (3 sec) jusqu'à 90° de flexion",'Pause 1 sec en bas','Remonter en 2 sec en poussant fort'],
+                      progression:'Augmenter de 2–5 kg par semaine.' },
+                    { id:'rj1e2', name:'Soulevé de terre jambes tendues', mediaUrl:'./assets/deadlift_illustration_1775427773855.png', meta:'3 × 8–10 rép',
+                      purpose:'Activation de la chaîne postérieure (ischio-jambiers, fessiers).',
+                      steps:["Debout, pieds largeur d'épaules, barre devant",'Légère flexion des genoux','Pencher le buste en gardant le dos plat',"Descendre jusqu'à mi-tibia",'Remonter en contractant les fessiers'] },
+                    { id:'rj1e3', name:'Fente marchée', mediaUrl:'./assets/cat_jambes_1775428794260.png', meta:'3 × 12 pas par jambe',
+                      purpose:"Développer la force unilatérale et l'équilibre.",
+                      steps:['Debout, haltères dans chaque main','Faire un grand pas en avant',"Le genou arrière s'approche du sol",'Pousser sur le pied avant pour revenir','Alterner les jambes en avançant'] }
+                ]
+            },
+            {
+                id: 2, name: 'Hypertrophie & Volume', weeks: '3–6',
+                description: "Augmenter le volume d'entraînement pour stimuler la croissance musculaire.",
+                frequency: '4×/semaine',
+                exercises: [
+                    { id:'rj2e1', name:'Squat complet', mediaUrl:'./assets/squat_illustration_1775427762074.png', meta:'4 × 8–10 rép | Tempo 3-1-2',
+                      purpose:'Renforcement maximal du quadriceps en amplitude complète.',
+                      steps:['Barre sur les épaules ou haltères',"Descendre contrôlé jusqu'à 90°",'Ne jamais verrouiller les genoux complètement','Remonter en poussant fort dans le sol'],
+                      progression:'Augmenter de 2,5–5 kg par session.' },
+                    { id:'rj2e2', name:'Leg press', mediaUrl:'./assets/leg_press.png', meta:'4 × 10 rép | Tempo contrôlé',
+                      purpose:'Force brute des jambes sans charge sur le dos.',
+                      steps:["Assis, pieds largeur d'épaules sur la plateforme","Descendre contrôlé jusqu'à 90°",'Ne pas verrouiller les genoux en haut','Remonter en poussant fort'] },
+                    { id:'rj2e3', name:'Hip thrust', mediaUrl:'./assets/hip_thrust.png', meta:'4 × 12 rép | Pause 2 sec en haut',
+                      purpose:"Isoler et maximiser l'activation des fessiers.",
+                      steps:['Dos appuyé sur un banc, épaules au niveau du bord','Barre sur les hanches (serviette pour le confort)','Pousser les hanches vers le haut','Maintenir 2 sec — contracter au maximum les fessiers','Redescendre lentement'],
+                      progression:'Augmenter de 5–10 kg par semaine.' }
+                ]
+            },
+            {
+                id: 3, name: 'Force Maximale', weeks: '7–8',
+                description: 'Travailler à haute intensité pour maximiser la force.',
+                frequency: '3–4×/semaine',
+                exercises: [
+                    { id:'rj3e1', name:'Squat lourd', mediaUrl:'./assets/squat_illustration_1775427762074.png', meta:'5 × 5 rép | Intensité 80–85 %',
+                      purpose:'Développer la force maximale des membres inférieurs.',
+                      steps:['Barre correctement positionnée sur les trapèzes',"Descendre contrôlé jusqu'à parallèle",'Drive puissant avec les hanches','Maintenir le dos rigide tout au long du mouvement','Repos 3–5 min entre séries'] },
+                    { id:'rj3e2', name:'Soulevé de terre conventionnel', mediaUrl:'./assets/deadlift_illustration_1775427773855.png', meta:'5 × 3–5 rép | Intensité 80–85 %',
+                      purpose:'Exercice roi de la force : chaîne postérieure complète.',
+                      steps:['Pieds hip-width, barre au-dessus des médio-pieds','Saisir la barre en pronation ou alternée','Dos plat, épaules légèrement devant la barre','Pousser dans le sol pour initier le mouvement','Hanches et épaules montent au même rythme'],
+                      warning:'Ne jamais arrondir le bas du dos sous charge maximale.' }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'core_gainage',
+        name: 'Core & Gainage', mediaUrl:'./assets/cat_core_1775428850418.png',
+        category: 'Stabilité',
+        description: 'Renforcer le centre du corps et la stabilité | 6 semaines',
+        duration: 6,
+        phases: [
+            {
+                id: 1, name: 'Fondamentaux du gainage', weeks: '1–2',
+                description: 'Maîtriser les exercices de base pour activer les muscles profonds.',
+                frequency: '5×/semaine (15–20 min)',
+                exercises: [
+                    { id:'cg1e1', name:'Planche frontale', mediaUrl:'./assets/plank_illustration_1775427797986.png', meta:'3 × 20–60 sec | Repos 30 sec',
+                      purpose:'Renforcer les abdominaux profonds et la stabilité du rachis.',
+                      steps:['Appui sur avant-bras et pointes de pieds','Corps parfaitement aligné (pas de creux dorsal)','Serrer les abdos, les fessiers et les cuisses','Respirer normalement','Tenir sans relâcher'] },
+                    { id:'cg1e2', name:'Planche latérale', mediaUrl:'./assets/cat_core.png', meta:'3 × 20–30 sec par côté',
+                      purpose:'Renforcer les obliques et les stabilisateurs latéraux.',
+                      steps:["Allongé sur le côté, appui sur l'avant-bras",'Corps aligné de la tête aux pieds','Soulever les hanches vers le haut','Serrer les obliques',"Ne pas laisser les hanches s'affaisser"] },
+                    { id:'cg1e3', name:'Pont fessier', mediaUrl:'./assets/glute_bridge.png', meta:'3 × 15 rép | Tempo 2-2-2',
+                      purpose:'Activer fessiers et chaîne postérieure.',
+                      steps:['Allongé sur le dos, genoux fléchis, pieds au sol','Serrer les fessiers et soulever le bassin','Alignement épaules–hanches–genoux','Maintenir 2 sec en haut','Redescendre en 2 sec'] },
+                    { id:'cg1e4', name:'Bird-dog', mediaUrl:'./assets/bird_dog.png', meta:'3 × 10 par côté',
+                      purpose:'Stabilité lombaire en dissociation des membres.',
+                      steps:['À quatre pattes, mains sous les épaules','Étendre simultanément le bras droit et la jambe gauche','Garder le dos plat et le bassin stable','Revenir lentement au centre','Alterner les côtés'] }
+                ]
+            },
+            {
+                id: 2, name: 'Progression & Dynamique', weeks: '3–4',
+                description: 'Intégrer des mouvements dynamiques pour un gainage fonctionnel.',
+                frequency: '5×/semaine',
+                exercises: [
+                    { id:'cg2e1', name:'Dead bug', mediaUrl:'./assets/cat_core.png', meta:'3 × 10 par côté',
+                      purpose:'Stabilité du core en mouvement — déconnexion bras/jambes.',
+                      steps:['Allongé sur le dos, bras tendus vers le plafond, genoux à 90°','Abaisser lentement le bras droit et la jambe gauche','Garder le bas du dos collé au sol — ne pas cambrer','Revenir au centre','Alterner de façon contrôlée'] },
+                    { id:'cg2e2', name:'Mountain climber', mediaUrl:'./assets/cat_cardio.png', meta:'3 × 30 sec',
+                      purpose:'Gainage dynamique avec élévation du rythme cardiaque.',
+                      steps:['Position de pompe tendue, corps aligné','Amener le genou droit vers la poitrine','Replacer et amener le genou gauche','Alterner rapidement en gardant le gainage'],
+                      progression:"Augmenter la vitesse d'exécution chaque semaine." }
+                ]
+            },
+            {
+                id: 3, name: 'Force & Rotation', weeks: '5–6',
+                description: 'Intégrer les rotations et la force du core en amplitude.',
+                frequency: '4×/semaine',
+                exercises: [
+                    { id:'cg3e1', name:'Pallof press', mediaUrl:'./assets/cat_core.png', meta:'3 × 12 rép par côté',
+                      purpose:'Renforcer le core en résistance à la rotation — très fonctionnel.',
+                      steps:['Élastique ou câble fixé à hauteur de hanche sur le côté','Se tenir debout de profil, bras pliés, mains sur la poitrine','Pousser les mains devant soi en tendant les bras','Tenir 2 sec — résister à la rotation','Revenir lentement'] }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'mobilite',
+        name: 'Mobilité & Flexibilité', mediaUrl:'./assets/cat_mobility.png',
+        category: 'Récupération',
+        description: 'Améliorer la mobilité articulaire | 4 semaines',
+        duration: 4,
+        phases: [
+            {
+                id: 1, name: 'Mobilité globale', weeks: '1–4',
+                description: 'Travailler quotidiennement sur la mobilité de toutes les articulations clés.',
+                frequency: 'Quotidien (15–20 min)',
+                exercises: [
+                    { id:'mob1e1', name:'Étirement psoas-iliaque', mediaUrl:'./assets/cat_mobility.png', meta:'3 × 30 sec par côté',
+                      purpose:'Assouplir les fléchisseurs de hanche.',
+                      steps:['Position de chevalier servant (genou droit au sol)','Pied gauche en avant, genou à 90°',"Avancer doucement le bassin vers l'avant",'Garder le buste droit, contracter les abdos',"Sentir l'étirement doux à l'avant de la hanche"] },
+                    { id:'mob1e2', name:'Rotations hanche (couché)', mediaUrl:'./assets/cat_mobility.png', meta:'2 × 10 rotations par côté',
+                      purpose:"Mobiliser l'articulation coxo-fémorale en rotation.",
+                      steps:['Allongé sur le dos, genoux fléchis','Faire tomber les genoux à droite','Garder les épaules au sol','Revenir au centre','Alterner les côtés'] },
+                    { id:'mob1e3', name:'Mobilité thoracique', mediaUrl:'./assets/cat_mobility.png', meta:'2 × 10 par côté',
+                      purpose:'Libérer la colonne thoracique souvent rigidifiée par la sédentarité.',
+                      steps:['À quatre pattes, main derrière la tête','Faire une rotation du tronc vers le haut, coude vers le plafond','Suivre du regard','Revenir lentement','Alterner les côtés'] },
+                    { id:'mob1e4', name:'Squat profond assisté', mediaUrl:'./assets/squat_illustration_1775427762074.png', meta:'2 × 60 sec',
+                      purpose:'Améliorer la mobilité des chevilles, hanches et colonne.',
+                      steps:['Se tenir à un montant ou un cadre de porte','Descendre en squat aussi bas que possible',"Pousser les genoux vers l'extérieur avec les coudes",'Garder le dos droit','Tenir et relâcher progressivement la tension'] }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'haut_corps',
+        name: 'Force — Haut du Corps', mediaUrl:'./assets/cat_arms.png',
+        category: 'Force & Hypertrophie',
+        description: 'Renforcer poitrine, dos, épaules et bras | 8 semaines',
+        duration: 8,
+        phases: [
+            {
+                id: 1, name: 'Activation & Technique', weeks: '1–2',
+                description: 'Maîtriser les mouvements fondamentaux du haut du corps.',
+                frequency: '4×/semaine (push/pull)',
+                exercises: [
+                    { id:'hc1e1', name:'Pompes', mediaUrl:'./assets/pushup.png', meta:'4 × 10–15 rép',
+                      purpose:'Activation pectoraux, deltoïdes antérieurs et triceps.',
+                      steps:['Position de pompe, mains un peu plus larges que les épaules','Corps aligné de la tête aux talons',"Descendre la poitrine jusqu'à 2 cm du sol",'Pousser puissamment vers le haut','Garder le gainage tout au long'] },
+                    { id:'hc1e2', name:'Tirage horizontal (élastique ou câble)', mediaUrl:'./assets/rowing_cable.png', meta:'4 × 12 rép',
+                      purpose:'Renforcer le dos et corriger la posture.',
+                      steps:["Saisir l'élastique ou la barre à hauteur de poitrine",'Tirer en ramenant les coudes près du corps','Serrer les omoplates en fin de mouvement','Revenir lentement (3 sec)'] },
+                    { id:'hc1e3', name:'Élévations latérales', mediaUrl:'./assets/cat_arms.png', meta:'3 × 15 rép | Tempo contrôlé',
+                      purpose:'Développer les deltoïdes latéraux pour des épaules larges.',
+                      steps:['Debout, haltères dans chaque main',"Lever les bras latéralement jusqu'à la hauteur des épaules",'Légère flexion du coude','Redescendre lentement (3 sec)'],
+                      warning:'Ne jamais hausser les épaules lors du mouvement.' }
+                ]
+            },
+            {
+                id: 2, name: 'Hypertrophie', weeks: '3–6',
+                description: "Volume d'entraînement élevé pour stimuler la croissance musculaire.",
+                frequency: '4–5×/semaine (split push/pull/legs)',
+                exercises: [
+                    { id:'hc2e1', name:'Développé couché', mediaUrl:'./assets/benchpress_illustration_1775427787141.png', meta:'4 × 8–10 rép | Tempo 3-1-2',
+                      purpose:'Exercice principal de force pectorale.',
+                      steps:['Allongé sur banc, pieds au sol','Barre ou haltères à hauteur des pectoraux',"Descendre contrôlé (3 sec) jusqu'à effleurer la poitrine",'Pousser explosif vers le haut','Verrouiller les coudes sans blocage complet'],
+                      progression:'Augmenter de 2,5 kg par semaine.' },
+                    { id:'hc2e2', name:'Tractions / Lat pulldown', mediaUrl:'./assets/pullup.png', meta:'4 × 8–12 rép',
+                      purpose:'Développer la largeur du dos (grand dorsal).',
+                      steps:["Saisir la barre en pronation, largeur d'épaules ou plus",'Tirer la barre vers le bas en amenant les coudes vers les hanches','Maintenir 1 sec en bas, omoplates abaissées','Revenir lentement (3 sec)'] },
+                    { id:'hc2e3', name:'Curl biceps', mediaUrl:'./assets/bicep_curl.png', meta:'3 × 12 rép',
+                      purpose:'Isoler et développer les biceps.',
+                      steps:["Debout, haltères dans chaque main, paumes vers l'avant",'Fléchir les avant-bras vers les épaules','Maintenir 1 sec en haut','Redescendre lentement (3 sec)'] }
+                ]
+            },
+            {
+                id: 3, name: 'Force Maximale', weeks: '7–8',
+                description: 'Séances courtes et intenses à haute charge.',
+                frequency: '3×/semaine',
+                exercises: [
+                    { id:'hc3e1', name:'Développé couché lourd', mediaUrl:'./assets/benchpress_illustration_1775427787141.png', meta:'5 × 3–5 rép | Intensité 80–85 %',
+                      purpose:'Maximiser la force des pectoraux.',
+                      steps:['Échauffement progressif obligatoire','Descendre contrôlé','Pousser explosif','Repos complet 3–4 min entre séries'] }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'hiit_cardio',
+        name: 'HIIT & Conditionnement', mediaUrl:'./assets/cat_cardio_1775428827460.png',
+        category: 'Cardio & Endurance',
+        description: "Brûler des calories et améliorer l'endurance | 4 semaines",
+        duration: 4,
+        phases: [
+            {
+                id: 1, name: 'Initiation HIIT', weeks: '1–2',
+                description: "S'initier au HIIT avec des ratios travail/repos adaptés.",
+                frequency: '3–4×/semaine',
+                exercises: [
+                    { id:'hi1e1', name:'Burpees', mediaUrl:'./assets/burpee.png', meta:'4 × 30 sec travail | 30 sec repos',
+                      purpose:'Exercice complet — cardio, force, coordination.',
+                      steps:['Debout, mains au sol','Sauter les pieds en arrière (position pompe)','Option : faire une pompe','Ramener les pieds, se redresser et sauter','Les bras au-dessus de la tête'],
+                      progression:'Augmenter la durée ou réduire le repos chaque semaine.' },
+                    { id:'hi1e2', name:'Mountain Climber', mediaUrl:'./assets/pushup.png', meta:'4 × 30 sec | Repos 20 sec',
+                      purpose:'Cardio intense + gainage dynamique.',
+                      steps:['Position de pompe','Amener le genou droit vers la poitrine','Replacer et amener le genou gauche','Alterner rapidement'] },
+                    { id:'hi1e3', name:'Jump squats', mediaUrl:'./assets/squat_illustration_1775427762074.png', meta:'4 × 10 sauts | Repos 40 sec',
+                      purpose:'Explosive power des membres inférieurs et cardio.',
+                      steps:['Position squat, pieds largeur épaules','Descendre en squat','Sauter explosif vers le haut','Atterrir en douceur sur les deux pieds','Enchaîner immédiatement'] }
+                ]
+            },
+            {
+                id: 2, name: 'HIIT Avancé', weeks: '3–4',
+                description: 'Intervalles plus intenses pour maximiser la combustion.',
+                frequency: '4×/semaine',
+                exercises: [
+                    { id:'hi2e1', name:'Tabata — Burpees', mediaUrl:'./assets/burpee.png', meta:'8 × (20 sec / 10 sec) = 4 min',
+                      purpose:'Format Tabata ultra-intense pour brûler un maximum en peu de temps.',
+                      steps:['20 sec de burpees à effort maximal','10 sec de repos complet','Répéter 8 fois (4 min total)','Récupérer 1–2 min avant le prochain exercice'],
+                      warning:'Ne jamais sacrifier la technique pour la vitesse.' }
+                ]
+            }
+        ]
+    }
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATABASE
+// ─────────────────────────────────────────────────────────────────────────────
+const db = new Dexie('RehabV2');
+db.version(1).stores({ settings:'key', progress:'date', pain:'date', sessions:'date' });
+db.version(2).stores({ settings:'key', progress:'date', pain:'date', sessions:'date', loadNotes:'[exId+date]' });
+
+let state = {
+    currentProgram: 'football_recomp_2026',
+    currentPhase: 1,
+    startDate: today(),
+    completedExercises: {},
+    completedSessions: [],
+    painLog: {},
+    sessionMetrics: {},
+    darkMode: false,
+    loadNotes: {}
+};
+let prog = null; // active program object
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function today() { return new Date().toISOString().split('T')[0]; }
+function $(id) { return document.getElementById(id); }
+function phaseColor(id) { return ['#06b6d4','#f59e0b','#ef4444','#10b981','#8b5cf6'][(id-1)%5]; }
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PERSIST
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadState() {
+    try {
+        const rows = await db.settings.toArray();
+        rows.forEach(r => { if (r.key in state) state[r.key] = r.value; });
+        const prog = await db.progress.toArray();
+        prog.forEach(r => { state.completedExercises[r.date] = r.completedExercises || []; });
+        const pain = await db.pain.toArray();
+        pain.forEach(r => { state.painLog[r.date] = r.level; });
+        const sess = await db.sessions.toArray();
+        state.completedSessions = sess.map(r => r.date);
+        const notes = await db.loadNotes.toArray();
+        notes.forEach(r => {
+            if (!state.loadNotes[r.exId]) state.loadNotes[r.exId] = {};
+            state.loadNotes[r.exId][r.date] = r.note;
+        });
+        if (!state.sessionMetrics || typeof state.sessionMetrics !== 'object') state.sessionMetrics = {};
+    } catch(e) { console.warn('DB load error', e); }
+}
+
+async function saveState() {
+    try {
+        const keys = ['currentProgram','currentPhase','startDate','darkMode','sessionMetrics'];
+        await db.settings.bulkPut(keys.map(k => ({ key:k, value:state[k] })));
+        const progItems = Object.entries(state.completedExercises).map(([date,v]) => ({ date, completedExercises:v }));
+        if (progItems.length) await db.progress.bulkPut(progItems);
+        const painItems = Object.entries(state.painLog).map(([date,level]) => ({ date, level }));
+        if (painItems.length) await db.pain.bulkPut(painItems);
+        const sessItems = state.completedSessions.map(date => ({ date }));
+        if (sessItems.length) await db.sessions.bulkPut(sessItems);
+        // load notes
+        const noteItems = [];
+        Object.entries(state.loadNotes).forEach(([exId, byDate]) => {
+            Object.entries(byDate).forEach(([date, note]) => {
+                if (note) noteItems.push({ exId, date, note });
+            });
+        });
+        if (noteItems.length) await db.loadNotes.bulkPut(noteItems);
+    } catch(e) { console.warn('DB save error', e); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+async function init() {
+    await loadState();
+
+    // dark mode
+    if (state.darkMode) applyDark(true);
+
+    // populate selector
+    const sel = $('programSelect');
+    PROGRAMS.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        sel.appendChild(opt);
+    });
+    $('adminProgCount').textContent = PROGRAMS.length;
+
+    // session metrics UI
+    renderSessionMetricsCard();
+
+    // activate saved program
+    sel.value = state.currentProgram;
+    switchProgram(state.currentProgram, false);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DARK MODE
+// ─────────────────────────────────────────────────────────────────────────────
+function applyDark(on) {
+    document.documentElement.setAttribute('data-theme', on ? 'dark' : 'light');
+    $('timerDisplay').parentElement?.parentElement; // just refresh
+}
+function toggleDark() {
+    state.darkMode = !state.darkMode;
+    applyDark(state.darkMode);
+    saveState();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────────────────────────────────────
+function showSection(name, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    $('section-' + name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    if (name === 'seance') renderSeance();
+    if (name === 'suivi') renderSuivi();
+    if (name === 'admin') renderAdmin();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROGRAM SWITCH
+// ─────────────────────────────────────────────────────────────────────────────
+function switchProgram(id, save = true) {
+    prog = PROGRAMS.find(p => p.id === id);
+    if (!prog) return;
+    state.currentProgram = id;
+    $('appTitle').textContent = prog.name;
+    $('appDesc').textContent = prog.description;
+    $('adminProgName').textContent = prog.name;
+    $('disclaimer').style.display = prog.disclaimer ? 'block' : 'none';
+    renderProgramme();
+    updateProgress();
+    if (save) saveState();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROGRAMME TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function renderProgramme() {
+    const c = $('programmeContainer');
+    if (!prog) { c.innerHTML = '<div class="empty-state">Sélectionnez un programme</div>'; return; }
+    const done = state.completedExercises[today()] || [];
+    let html = '';
+    prog.phases.forEach(ph => {
+        const col = phaseColor(ph.id);
+        html += `<div style="margin-bottom:28px">
+            <span class="phase-badge" style="background:${col}">Phase ${ph.id} — Semaines ${ph.weeks}</span>
+            <div class="card">
+                <div class="card-title">${esc(ph.name)}</div>
+                <div class="card-body">${esc(ph.description)}<br>
+                <span style="margin-top:4px;display:inline-block"><b>Fréquence :</b> ${esc(ph.frequency)}</span>
+                ${ph.rule ? `<br><span><b>Règle d'or :</b> ${esc(ph.rule)}</span>` : ''}
+                </div>
+            </div>`;
+        if (!ph.exercises.length) {
+            html += `<div class="card empty-state">Exercices à venir…</div>`;
+        } else {
+            ph.exercises.forEach(ex => {
+                html += renderExercise(ex, done.includes(ex.id));
+            });
+        }
+        html += '</div>';
+    });
+    c.innerHTML = html;
+}
+
+function ytUrl(name) {
+    return "https://www.youtube.com/results?search_query=" + encodeURIComponent("exercice " + name + " comment faire");
+}
+
+function renderExercise(ex, isDone) {
+    const stepsHtml = ex.steps.map(s => `<li>${esc(s)}</li>`).join('');
+    return `<div class="exercise${isDone?' completed':''}" data-id="${esc(ex.id)}" id="ex-${esc(ex.id)}">
+        <div class="exercise-header" onclick="toggleEx('${esc(ex.id)}')">
+            <div class="exercise-check" onclick="event.stopPropagation();toggleDone('${esc(ex.id)}')">✓</div>
+            <div class="exercise-info">
+                <div class="exercise-name">${esc(ex.name)}</div>
+                <div class="exercise-meta">${esc(ex.meta)}</div>
+            </div>
+            <div class="exercise-chevron">▾</div>
+        </div>
+        <div class="exercise-details">
+            <p><b>Objectif :</b> ${esc(ex.purpose)}</p>
+            ${ex.mediaUrl ? `
+            <div style="margin: 14px 0; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border); background: var(--card); overflow: hidden; display: flex; justify-content: center; padding: 10px;">
+                <img src="${esc(ex.mediaUrl)}" loading="lazy" style="max-width:100%; max-height:240px; border-radius: 8px;" alt="${esc(ex.name)} animation">
+            </div>
+            ` : ''}
+            <ul class="steps">${stepsHtml}</ul>
+            ${ex.warning   ? `<div class="alert-box alert-warning">⚠️ <b>Attention :</b> ${esc(ex.warning)}</div>` : ''}
+            ${ex.progression ? `<div class="alert-box alert-info">📈 <b>Progression :</b> ${esc(ex.progression)}</div>` : ''}
+            ${renderSeriesTracker(ex.id, ex.meta)}
+            <a class="yt-btn" href="${ytUrl(ex.name)}" target="_blank" rel="noopener">▶ Voir sur YouTube</a>
+        </div>
+    </div>`;
+}
+
+// BUG FIX: toggle expand without re-rendering
+function toggleEx(id) {
+    const el = document.getElementById('ex-' + id);
+    if (el) el.classList.toggle('open');
+}
+
+// BUG FIX: update state without re-rendering entire programme
+function toggleDone(id) {
+    const t = today();
+    if (!state.completedExercises[t]) state.completedExercises[t] = [];
+    const arr = state.completedExercises[t];
+    const idx = arr.indexOf(id);
+    if (idx > -1) arr.splice(idx, 1); else arr.push(id);
+    saveState();
+    // update only the affected element
+    const el = document.getElementById('ex-' + id);
+    if (el) el.classList.toggle('completed', arr.includes(id));
+    checkPhaseComplete();
+    updateProgress();
+}
+
+function checkPhaseComplete() {
+    if (!prog) return;
+    const t = today();
+    const done = state.completedExercises[t] || [];
+    const ph = prog.phases.find(p => p.id === state.currentPhase);
+    if (!ph) return;
+    const allDone = ph.exercises.every(ex => done.includes(ex.id));
+    const seanceDone = $('seanceDone');
+    if (seanceDone) seanceDone.style.display = allDone && ph.exercises.length ? 'block' : 'none';
+    if (allDone && ph.exercises.length && !state.completedSessions.includes(t)) {
+        state.completedSessions.push(t);
+        saveState();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SÉANCE TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function renderSeance() {
+    if (!prog) return;
+    const btns = $('phaseBtns');
+    btns.innerHTML = prog.phases.map(ph =>
+        `<button class="phase-btn${ph.id===state.currentPhase?' active':''}" onclick="setPhase(${ph.id})">${phaseButtonLabel(ph)}</button>`
+    ).join('');
+    const ph = prog.phases.find(p => p.id === state.currentPhase);
+    if (!ph) return;
+    const col = phaseColor(ph.id);
+    const done = state.completedExercises[today()] || [];
+    const metrics = getTodayMetrics();
+    const week = getCurrentWeek();
+    const weekPlan = getWeekPlan(week);
+    const completedCount = ph.exercises.filter(ex => done.includes(ex.id)).length;
+    const maxPain = Math.max(metrics.tendonPain || 0, metrics.backPain || 0);
+    const modeLabel = metrics.matchDay ? 'Jour de match' : 'Jour standard';
+    const adjustments = metrics.matchDay
+        ? ['Retirer 1 serie sur les jambes si fatigue ou match proche', 'Remplacer les intervalles par 8 a 10 min de zone 2', 'Garder 2 a 3 reps de marge partout']
+        : ['Plan complet autorise si douleurs stables', 'Cardio prevu maintenu', 'Progression normale si technique propre'];
+    $('seanceInfo').innerHTML = `
+        <div class="card" style="border-left:4px solid ${col}">
+            <div class="card-title">${esc(ph.name)}</div>
+            <div class="card-body">${esc(ph.description)}<br><b>Frequence :</b> ${esc(ph.frequency)}${ph.rule ? `<br><b>Regle :</b> ${esc(ph.rule)}` : ''}</div>
+        </div>
+        <div class="session-summary-grid">
+            <div class="micro-stat"><div class="micro-stat-value">${week}/${prog.duration}</div><div class="micro-stat-label">Semaine active</div></div>
+            <div class="micro-stat"><div class="micro-stat-value">${completedCount}/${ph.exercises.length}</div><div class="micro-stat-label">Exercices coches</div></div>
+            <div class="micro-stat"><div class="micro-stat-value">${modeLabel}</div><div class="micro-stat-label">Mode du jour</div></div>
+            <div class="micro-stat"><div class="micro-stat-value">${maxPain}/10</div><div class="micro-stat-label">Douleur max</div></div>
+        </div>
+        <div class="card week-card">
+            <div class="week-title">${esc(weekPlan.title)}</div>
+            <div class="week-focus">${esc(weekPlan.focus)}</div>
+            <ul class="week-list">${weekPlan.bullets.map(item => `<li>${esc(item)}</li>`).join('')}</ul>
+        </div>
+        <div class="card">
+            <div class="card-title">Ajustements du jour</div>
+            <div class="card-body"><ul class="week-list">${adjustments.map(item => `<li>${esc(item)}</li>`).join('')}</ul></div>
+        </div>
+    `;
+    const exHtml = ph.exercises.map(ex => {
+        const stepsHtml = ex.steps.map(s => `<li>${esc(s)}</li>`).join('');
+        const progressionHtml = ex.progression ? `<div class="alert-box alert-info"><b>Progression :</b> ${esc(ex.progression)}</div>` : '';
+        const matchHtml = metrics.matchDay && /Cardio|Intervalles/i.test(ex.name + ' ' + ex.meta)
+            ? `<div class="alert-box alert-info">Mode match : convertir ce bloc en cardio facile ou le raccourcir si besoin.</div>`
+            : '';
+        return `<div class="exercise${done.includes(ex.id)?' completed':''}" data-id="${esc(ex.id)}" id="sex-${esc(ex.id)}">
+            <div class="exercise-header" onclick="seanceDone2('${esc(ex.id)}')">
+                <div class="exercise-check">✓</div>
+                <div class="exercise-info">
+                    <div class="exercise-name">${esc(ex.name)}</div>
+                    <div class="exercise-meta">${esc(ex.meta)}</div>
+                </div>
+            </div>
+            <div class="exercise-details" style="display:block;border-top:1px solid var(--border)">
+                <p><b>Objectif :</b> ${esc(ex.purpose)}</p>
+                ${ex.mediaUrl ? `
+                <div style="margin: 14px 0; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border); background: var(--card); overflow: hidden; display: flex; justify-content: center; padding: 10px;">
+                    <img src="${esc(ex.mediaUrl)}" loading="lazy" style="max-width:100%; max-height:240px; border-radius: 8px;" alt="${esc(ex.name)} animation">
+                </div>
+                ` : ''}
+                <ul class="steps">${stepsHtml}</ul>
+                ${ex.warning ? `<div class="alert-box alert-warning">⚠️ ${esc(ex.warning)}</div>` : ''}
+                ${progressionHtml}
+                ${matchHtml}
+                ${renderSeriesTracker(ex.id, ex.meta)}
+                <a class="yt-btn" href="${ytUrl(ex.name)}" target="_blank" rel="noopener">▶ Voir sur YouTube</a>
+            </div>
+        </div>`;
+    }).join('');
+    $('seanceExercises').innerHTML = exHtml || '<div class="empty-state">Aucun exercice pour cette phase</div>';
+    checkPhaseComplete();
+    renderRotationBanner();
+}
+
+function seanceDone2(id) {
+    toggleDone(id);
+    // update seance exercise visual
+    const el = document.getElementById('sex-' + id);
+    if (el) {
+        const done = state.completedExercises[today()] || [];
+        el.classList.toggle('completed', done.includes(id));
+    }
+    // also sync programme tab if visible
+    const exProg = document.getElementById('ex-' + id);
+    if (exProg) {
+        const done = state.completedExercises[today()] || [];
+        exProg.classList.toggle('completed', done.includes(id));
+    }
+}
+
+function setPhase(n) {
+    state.currentPhase = n;
+    saveState();
+    renderSeance();
+    // also update suivi phase buttons
+    renderSuiviPhaseBtns();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIMER
+// ─────────────────────────────────────────────────────────────────────────────
+let timerIv = null, timerSec = 0, timerTarget = 0, timerRunning = false, timerDown = false;
+
+function setTimer(s, btn) {
+    resetTimer();
+    timerTarget = s; timerSec = s; timerDown = true;
+    updateTimerDisplay();
+    $('timerLabel').textContent = 'Prêt — ' + fmt(s);
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+}
+function toggleTimer() {
+    timerRunning ? pauseTimer() : startTimer();
+}
+function startTimer() {
+    timerRunning = true;
+    const startBtn = $('timerStartBtn');
+    startBtn.textContent = 'Pause';
+    startBtn.className = 'timer-btn timer-btn-pause';
+    $('timerLabel').textContent = 'En cours…';
+    $('timerDisplay').classList.remove('done');
+    timerIv = setInterval(() => {
+        if (timerDown) {
+            timerSec--;
+            if (timerSec <= 0) {
+                timerSec = 0;
+                pauseTimer();
+                // BUG FIX: visual feedback when done
+                $('timerLabel').textContent = '✅ Terminé !';
+                $('timerDisplay').classList.add('done');
+                const startBtn = $('timerStartBtn');
+                startBtn.textContent = 'Démarrer';
+                startBtn.className = 'timer-btn timer-btn-start';
+                if (navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
+                try {
+                    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    osc.connect(g); g.connect(ctx.destination);
+                    osc.frequency.value = 880; g.gain.value = 0.3;
+                    osc.start();
+                    setTimeout(() => { osc.stop(); ctx.close(); }, 600);
+                } catch(e) {}
+            }
+        } else { timerSec++; }
+        updateTimerDisplay();
+    }, 1000);
+}
+function pauseTimer() {
+    timerRunning = false; clearInterval(timerIv);
+    const b = $('timerStartBtn');
+    b.textContent = 'Reprendre'; b.className = 'timer-btn timer-btn-start';
+}
+function resetTimer() {
+    pauseTimer();
+    timerSec = timerTarget || 0; timerDown = timerTarget > 0;
+    updateTimerDisplay();
+    $('timerLabel').textContent = 'Prêt';
+    $('timerDisplay').classList.remove('done');
+    $('timerStartBtn').textContent = 'Démarrer';
+    $('timerStartBtn').className = 'timer-btn timer-btn-start';
+}
+function updateTimerDisplay() { $('timerDisplay').textContent = fmt(timerSec); }
+function fmt(s) { return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+
+function phaseButtonLabel(ph) {
+    const labels = ['A','B','C','D','E'];
+    if (prog && prog.id === 'football_recomp_2026') return 'Seance ' + (labels[(ph.id - 1) % labels.length] || ph.id);
+    return 'Phase ' + ph.id;
+}
+function getCurrentWeek() {
+    if (!prog) return 1;
+    const start = new Date(state.startDate || today());
+    const now = new Date(today());
+    const diffDays = Math.max(0, Math.floor((now - start) / 86400000));
+    return Math.min(prog.duration || 1, Math.max(1, Math.floor(diffDays / 7) + 1));
+}
+function getWeekPlan(week) {
+    if (prog && prog.id === 'football_recomp_2026') {
+        const plans = [
+            { title: 'Semaine 1', focus: 'Installation technique', bullets: ['Rester a 2-3 reps de marge', 'Valider les trajectoires', 'Noter les charges de base'] },
+            { title: 'Semaine 2', focus: 'Stabiliser le volume', bullets: ['Reprendre les memes charges si besoin', 'Chercher plus de proprete', 'Aucune hausse si douleur > 2/10'] },
+            { title: 'Semaine 3', focus: 'Ajouter des repetitions', bullets: ['Ajouter 1 rep sur les mouvements principaux si propre', 'Cardio identique', 'Toujours laisser 1-3 reps de marge'] },
+            { title: 'Semaine 4', focus: 'Consolider puis charger legerement', bullets: ['Si toutes les series passent, monter de 2,5 a 5 %', 'Conserver la meme technique', 'Pas de sprint max'] },
+            { title: 'Semaine 5', focus: 'Bloc de charge 1', bullets: ['Charge un peu plus haute sur les gros mouvements', 'Volume stable', 'Surveiller tendon et dos le lendemain'] },
+            { title: 'Semaine 6', focus: 'Bloc de charge 2', bullets: ['Chercher le haut de fourchette ou une petite hausse', 'Pas d echec musculaire', 'Foot prioritaire si fatigue'] },
+            { title: 'Semaine 7', focus: 'Semaine haute propre', bullets: ['Volume normal', 'Intensite haute mais propre', 'Aucune serie forcee'] },
+            { title: 'Semaine 8', focus: 'Deload intelligent', bullets: ['Reduire le volume de 30 a 40 %', 'Garder un peu d intensite', 'Cardio plus leger et match prioritaire'] }
+        ];
+        return plans[Math.min(plans.length, Math.max(1, week)) - 1];
+    }
+    return {
+        title: 'Semaine ' + week,
+        focus: 'Progression reguliere',
+        bullets: ['Respecter la technique', 'Adapter selon la fatigue', 'Valider avant de charger']
+    };
+}
+function getTodayMetrics() {
+    if (!state.sessionMetrics || typeof state.sessionMetrics !== 'object') state.sessionMetrics = {};
+    const t = today();
+    if (!state.sessionMetrics[t]) state.sessionMetrics[t] = { matchDay: false, tendonPain: 0, backPain: 0 };
+    return state.sessionMetrics[t];
+}
+function buildSessionFeedback(metrics) {
+    const maxPain = Math.max(metrics.tendonPain || 0, metrics.backPain || 0);
+    let color = '#16a34a';
+    let msg = 'Etat vert : seance normale autorisee.';
+    if (maxPain > 2) { color = '#f59e0b'; msg = 'Etat orange : reduire un peu la charge ou le volume.'; }
+    if (maxPain > 5) { color = '#dc2626'; msg = 'Etat rouge : modifier la seance et eviter toute agressivite inutile.'; }
+    const extra = metrics.matchDay
+        ? 'Mode match actif : retirer 1 serie sur les jambes si fatigue et passer le cardio intense en zone 2 legere.'
+        : 'Pas de match : plan complet si douleurs stables.';
+    return `<span style="color:${color};font-weight:700">${msg}</span><br><span style="color:var(--text-light)">${extra}</span>`;
+}
+function renderMetricScale(key, current) {
+    let html = '<div class="pain-scale">';
+    for (let i = 0; i <= 10; i++) {
+        html += `<button class="pain-btn${i===current?' selected':''}" onclick="setSessionMetric('${key}', ${i})">${i}</button>`;
+    }
+    html += '</div>';
+    html += '<div class="pain-labels" style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-light);margin-top:6px;font-weight:700;text-transform:uppercase"><span>0</span><span>5</span><span>10</span></div>';
+    return html;
+}
+function renderSessionMetricsCard() {
+    const c = $('sessionMetricsCard');
+    if (!c) return;
+    const metrics = getTodayMetrics();
+    c.innerHTML = `
+        <div class="card-title">Etat de la seance</div>
+        <div style="font-size:12px;color:var(--text-light);margin:6px 0 10px">Suivi specifique du jour : mode match, douleur tendon et douleur dos.</div>
+        <div class="match-toggle">
+            <button class="match-btn${!metrics.matchDay?' active':''}" onclick="setMatchDay(false)">Pas de match</button>
+            <button class="match-btn${metrics.matchDay?' active':''}" onclick="setMatchDay(true)">Jour de match</button>
+        </div>
+        <div class="metric-grid">
+            <div>
+                <div class="metric-title">Douleur tendon</div>
+                ${renderMetricScale('tendonPain', metrics.tendonPain || 0)}
+            </div>
+            <div>
+                <div class="metric-title">Douleur dos</div>
+                ${renderMetricScale('backPain', metrics.backPain || 0)}
+            </div>
+        </div>
+        <div id="painFeedback" style="margin-top:10px;font-size:13px;line-height:1.5">${buildSessionFeedback(metrics)}</div>
+    `;
+}
+function saveSessionMetrics(patch) {
+    const t = today();
+    const current = getTodayMetrics();
+    const next = Object.assign({}, current, patch);
+    state.sessionMetrics[t] = next;
+    state.painLog[t] = Math.max(next.tendonPain || 0, next.backPain || 0);
+    saveState();
+    renderSessionMetricsCard();
+    renderSuivi();
+    const seanceSection = document.getElementById('section-seance');
+    if (seanceSection && seanceSection.classList.contains('active')) renderSeance();
+}
+function setMatchDay(isMatchDay) {
+    saveSessionMetrics({ matchDay: !!isMatchDay });
+}
+function setSessionMetric(key, value) {
+    saveSessionMetrics({ [key]: value });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUIVI TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function renderSuivi() {
+    $('statSessions').textContent = state.completedSessions.length;
+    let streak = 0;
+    const now = new Date();
+    for (let i = 0; i < 365; i++) {
+        const d = new Date(now); d.setDate(d.getDate() - i);
+        const ds = d.toISOString().split('T')[0];
+        if (state.completedSessions.includes(ds)) streak++;
+        else if (i > 0) break;
+    }
+    $('statStreak').textContent = streak;
+    const metrics = getTodayMetrics();
+    if ($('statTendon')) $('statTendon').textContent = metrics.tendonPain || 0;
+    if ($('statBack')) $('statBack').textContent = metrics.backPain || 0;
+    renderSessionMetricsCard();
+    renderCalendar();
+    renderSuiviPhaseBtns();
+}
+
+function renderSuiviPhaseBtns() {
+    const c = $('suiviPhaseBtns');
+    if (!prog || !c) return;
+    c.innerHTML = prog.phases.map(ph =>
+        `<button class="phase-btn${ph.id===state.currentPhase?' active':''}" onclick="setPhase(${ph.id})">${phaseButtonLabel(ph)}</button>`
+    ).join('');
+}
+
+function logPain(level) {
+    const t = today();
+    state.painLog[t] = level;
+    saveState();
+    document.querySelectorAll('.pain-btn').forEach(b => {
+        b.classList.toggle('selected', parseInt(b.dataset.v) === level);
+    });
+    const msgs = [
+        [2,'#16a34a','✅ Excellent ! Continuez normalement.'],
+        [4,'#f59e0b','⚠️ Attention : restez à la phase actuelle.'],
+        [6,'#ea580c','⚡ Alerte : réduisez l\'intensité et consultez si ça persiste.'],
+        [10,'#dc2626','🛑 STOP : arrêtez les exercices. Consultez votre médecin.']
+    ];
+    const [,color,msg] = msgs.find(([max]) => level <= max) || msgs[3];
+    $('painFeedback').innerHTML = `<span style="color:${color}">${msg}</span>`;
+}
+
+function renderCalendar() {
+    const cal = $('calendar');
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth();
+    const firstDay = new Date(y, m, 1);
+    const lastDay = new Date(y, m+1, 0);
+    const t = today();
+    let html = ['L','M','M','J','V','S','D'].map(d => `<div class="cal-head">${d}</div>`).join('');
+    let start = firstDay.getDay() - 1; if (start < 0) start = 6;
+    for (let i = 0; i < start; i++) html += `<div class="cal-day empty"></div>`;
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+        const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const cls = [
+            'cal-day',
+            state.completedSessions.includes(ds) ? 'done' : '',
+            ds === t ? 'today' : ''
+        ].join(' ');
+        html += `<div class="${cls}">${d}</div>`;
+    }
+    cal.innerHTML = html;
+}
+
+// BUG FIX: compare only exercises of active phase (not total completed count)
+function updateProgress() {
+    if (!prog) return;
+    const total = prog.duration * (prog.sessionsPerWeek || 4); // sessions estimees
+    const pct = Math.min(100, Math.round(state.completedSessions.length / total * 100));
+    $('progressFill').style.width = pct + '%';
+    $('progressTxt').textContent = pct + '% du programme';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIN TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function renderAdmin() {
+    if (!prog) { $('adminExList').innerHTML = '<div class="empty-state">Aucun programme actif</div>'; return; }
+    let html = '';
+    prog.phases.forEach(ph => {
+        html += `<div style="margin-bottom:14px">
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--text-light);margin-bottom:6px">Phase ${ph.id} — ${esc(ph.name)}</div>`;
+        if (!ph.exercises.length) {
+            html += `<div class="empty-state" style="padding:8px 0;text-align:left">Aucun exercice</div>`;
+        } else {
+            ph.exercises.forEach(ex => {
+                html += `<div class="ex-row">
+                    <span>${esc(ex.name)}</span>
+                    <button class="btn-danger" onclick="deleteExercise(${ph.id},'${esc(ex.id)}')">✕ Suppr.</button>
+                </div>`;
+            });
+        }
+        html += '</div>';
+    });
+    $('adminExList').innerHTML = html;
+}
+
+function deleteExercise(phaseId, exId) {
+    if (!confirm('Supprimer cet exercice ?')) return;
+    const ph = prog.phases.find(p => p.id === phaseId);
+    if (ph) {
+        ph.exercises = ph.exercises.filter(e => e.id !== exId);
+        renderProgramme();
+        renderAdmin();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL — ADD EXERCISE
+// ─────────────────────────────────────────────────────────────────────────────
+function openModal() {
+    if (!prog) return;
+    $('fPhase').innerHTML = prog.phases.map(ph =>
+        `<option value="${ph.id}">Phase ${ph.id} — ${esc(ph.name)}</option>`
+    ).join('');
+    ['fName','fMeta','fPurpose','fSteps','fMedia','fWarning','fProgression'].forEach(id => { $(id).value = ''; });
+    $('exerciseModal').classList.add('open');
+}
+
+function closeModal() { $('exerciseModal').classList.remove('open'); }
+
+function saveExercise() {
+    const name = $('fName').value.trim();
+    const meta = $('fMeta').value.trim();
+    const purpose = $('fPurpose').value.trim();
+    const steps = $('fSteps').value.split('\n').map(s => s.trim()).filter(Boolean);
+    if (!name || !meta || !purpose || !steps.length) {
+        alert('Veuillez remplir les champs obligatoires (*)'); return;
+    }
+    const phaseId = parseInt($('fPhase').value);
+    const ph = prog.phases.find(p => p.id === phaseId);
+    if (!ph) return;
+    const ex = {
+        id: 'custom_' + Date.now(),
+        name, meta, purpose, steps,
+        ...($('fMedia').value.trim() && { mediaUrl: $('fMedia').value.trim() }),
+        ...($('fWarning').value.trim() && { warning: $('fWarning').value.trim() }),
+        ...($('fProgression').value.trim() && { progression: $('fProgression').value.trim() })
+    };
+    ph.exercises.push(ex);
+    closeModal();
+    renderProgramme();
+    renderAdmin();
+    alert('✅ Exercice ajouté !');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORT / IMPORT
+// ─────────────────────────────────────────────────────────────────────────────
+function exportProgram() {
+    if (!prog) return;
+    dl(JSON.stringify(prog, null, 2), `program_${prog.id}_${today()}.json`);
+}
+function exportProgress() {
+    dl(JSON.stringify(state, null, 2), `progress_${today()}.json`);
+}
+function dl(json, filename) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([json], {type:'application/json'}));
+    a.download = filename; a.click();
+    URL.revokeObjectURL(a.href);
+}
+function importProgram(input) {
+    readFile(input, data => {
+        if (data.id && data.phases) {
+            const idx = PROGRAMS.findIndex(p => p.id === data.id);
+            if (idx >= 0) PROGRAMS[idx] = data; else PROGRAMS.push(data);
+            prog = PROGRAMS.find(p => p.id === data.id);
+            renderProgramme(); renderAdmin();
+            alert('✅ Programme importé !');
+        } else alert('❌ Format invalide');
+    });
+}
+function importProgress(input) {
+    readFile(input, data => {
+        Object.assign(state, data);
+        saveState();
+        alert('✅ Progression importée !');
+        location.reload();
+    });
+}
+function readFile(input, cb) {
+    const f = input.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = e => { try { cb(JSON.parse(e.target.result)); } catch { alert('❌ JSON invalide'); } };
+    r.readAsText(f);
+}
+function resetAll() {
+    if (confirm('⚠️ Réinitialiser TOUTES les données ? Cette action est irréversible.')) {
+        db.delete().then(() => location.reload());
+    }
+}
+
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SESSION ROTATION (A/B/C)
+// ─────────────────────────────────────────────────────────────────────────────
+function getNextSession() {
+    if (!prog || prog.phases.length < 2) return null;
+    // Find last completed phase based on completedSessions
+    const lastPhase = state.currentPhase;
+    const phaseLabels = ['A','B','C','D','E'];
+    const nPhases = prog.phases.length;
+    // suggest next session = (currentPhase % nPhases) + 1
+    const nextPhaseId = (lastPhase % nPhases) + 1;
+    const nextPhase = prog.phases.find(p => p.id === nextPhaseId);
+    const currentPhase = prog.phases.find(p => p.id === lastPhase);
+    return {
+        currentLabel: phaseLabels[(lastPhase-1) % phaseLabels.length],
+        nextLabel: phaseLabels[(nextPhaseId-1) % phaseLabels.length],
+        currentName: currentPhase ? currentPhase.name : '',
+        nextName: nextPhase ? nextPhase.name : '',
+        nextId: nextPhaseId
+    };
+}
+
+function renderRotationBanner() {
+    const c = document.getElementById('rotationBanner');
+    if (!c) return;
+    if (!prog || prog.phases.length < 2) { c.style.display = 'none'; return; }
+    const r = getNextSession();
+    if (!r) { c.style.display = 'none'; return; }
+    c.style.display = 'flex';
+    c.innerHTML = `
+        <div class="rotation-badge">${r.currentLabel}</div>
+        <div class="rotation-info">
+            <div class="rotation-label">Séance en cours</div>
+            <div class="rotation-title">${esc(r.currentName)}</div>
+            <div class="rotation-sub">Prochaine : <b>Séance ${r.nextLabel}</b></div>
+        </div>
+        <button onclick="setPhase(${r.nextId})" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+            → ${r.nextLabel}
+        </button>
+    `;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SERIES TRACKER
+// ─────────────────────────────────────────────────────────────────────────────
+
+function parseDefaultSets(meta) {
+    if (!meta) return 3;
+    const m = meta.match(/(\d+)\s*[×xX]/);
+    return m ? parseInt(m[1]) : 3;
+}
+
+function getSeriesData(exId, date) {
+    date = date || today();
+    if (!state.loadNotes[exId] || !state.loadNotes[exId][date]) return null;
+    const raw = state.loadNotes[exId][date];
+    if (typeof raw === 'string') return null;
+    return raw;
+}
+
+function getLastSeriesData(exId) {
+    if (!state.loadNotes[exId]) return null;
+    const t = today();
+    const dates = Object.keys(state.loadNotes[exId]).sort().reverse();
+    for (const d of dates) {
+        if (d === t) continue;
+        const raw = state.loadNotes[exId][d];
+        if (raw && typeof raw === 'object' && raw.sets) return { date: d, data: raw };
+        if (raw && typeof raw === 'string') return { date: d, legacy: raw };
+    }
+    return null;
+}
+
+function saveSeriesField(exId, setIdx, field, value) {
+    const t = today();
+    if (!state.loadNotes[exId]) state.loadNotes[exId] = {};
+    let data = getSeriesData(exId, t);
+    if (!data) data = { sets: [] };
+    while (data.sets.length <= setIdx) data.sets.push({ reps: '', charge: '', repos: '' });
+    data.sets[setIdx][field] = value;
+    state.loadNotes[exId][t] = data;
+    saveState();
+    const input = document.querySelector(`[data-series-id="${exId}-${setIdx}-${field}"]`);
+    if (input) input.classList.toggle('filled', value !== '');
+}
+
+function addSeriesRow(exId) {
+    const t = today();
+    if (!state.loadNotes[exId]) state.loadNotes[exId] = {};
+    let data = getSeriesData(exId, t);
+    if (!data) data = { sets: [] };
+    data.sets.push({ reps: '', charge: '', repos: '' });
+    state.loadNotes[exId][t] = data;
+    saveState();
+    refreshSeriesTracker(exId);
+}
+
+function removeSeriesRow(exId, setIdx) {
+    const t = today();
+    let data = getSeriesData(exId, t);
+    if (!data || !data.sets[setIdx]) return;
+    data.sets.splice(setIdx, 1);
+    state.loadNotes[exId][t] = data;
+    saveState();
+    refreshSeriesTracker(exId);
+}
+
+function refreshSeriesTracker(exId) {
+    document.querySelectorAll(`.series-tracker[data-ex="${exId}"]`).forEach(el => {
+        const meta = el.dataset.meta || '';
+        el.outerHTML = renderSeriesTracker(exId, meta);
+    });
+    // Restore rest banner display if timer is still running for this exercise
+    if (restTimerExId === exId) {
+        document.querySelectorAll(`.rest-banner[data-ex="${exId}"]`).forEach(b => {
+            b.style.display = 'flex';
+        });
+    }
+}
+
+// Rest timer state
+let restTimerInterval = null;
+let restTimerExId = null;
+
+function validateSeries(exId, setIdx) {
+    const t = today();
+    if (!state.loadNotes[exId]) state.loadNotes[exId] = {};
+    let data = getSeriesData(exId, t);
+    if (!data) data = { sets: [] };
+    while (data.sets.length <= setIdx) data.sets.push({ reps: '', charge: '', repos: '', done: false });
+    // Toggle done
+    data.sets[setIdx].done = !data.sets[setIdx].done;
+    state.loadNotes[exId][t] = data;
+    saveState();
+    if (data.sets[setIdx].done) {
+        const reposVal = parseInt(data.sets[setIdx].repos);
+        if (reposVal > 0) {
+            startRestTimer(exId, setIdx + 1, reposVal);
+        }
+    } else {
+        if (restTimerExId === exId) skipRestTimer(exId);
+    }
+    refreshSeriesTracker(exId);
+}
+
+function startRestTimer(exId, serieNum, seconds) {
+    // Stop any running timer first
+    if (restTimerInterval) {
+        clearInterval(restTimerInterval);
+        restTimerInterval = null;
+        if (restTimerExId) {
+            document.querySelectorAll(`.rest-banner[data-ex="${restTimerExId}"]`).forEach(b => {
+                b.style.display = 'none';
+                b.classList.remove('done');
+            });
+        }
+    }
+    restTimerExId = exId;
+    let remaining = seconds;
+    // Show & init banner
+    document.querySelectorAll(`.rest-banner[data-ex="${exId}"]`).forEach(b => {
+        b.style.display = 'flex';
+        b.classList.remove('done');
+        b.querySelector('.rest-serie-label').textContent = 'Série ' + serieNum + ' terminée';
+        b.querySelector('.rest-countdown').textContent = fmt(remaining);
+    });
+    restTimerInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+            clearInterval(restTimerInterval);
+            restTimerInterval = null;
+            document.querySelectorAll(`.rest-banner[data-ex="${exId}"]`).forEach(b => {
+                b.querySelector('.rest-countdown').textContent = '✅ Go !';
+                b.classList.add('done');
+            });
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.connect(g); g.connect(ctx.destination);
+                osc.frequency.value = 880; g.gain.value = 0.3;
+                osc.start();
+                setTimeout(() => { osc.stop(); ctx.close(); }, 600);
+            } catch(e) {}
+        } else {
+            document.querySelectorAll(`.rest-banner[data-ex="${exId}"]`).forEach(b => {
+                b.querySelector('.rest-countdown').textContent = fmt(remaining);
+            });
+        }
+    }, 1000);
+}
+
+function skipRestTimer(exId) {
+    if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
+    restTimerExId = null;
+    document.querySelectorAll(`.rest-banner[data-ex="${exId}"]`).forEach(b => {
+        b.style.display = 'none';
+        b.classList.remove('done');
+    });
+}
+
+function renderSeriesTracker(exId, meta) {
+    const t = today();
+    let data = getSeriesData(exId, t);
+    const defaultSets = parseDefaultSets(meta);
+    if (!data) {
+        data = { sets: [] };
+        for (let i = 0; i < defaultSets; i++) data.sets.push({ reps: '', charge: '', repos: '' });
+    }
+    const last = getLastSeriesData(exId);
+
+    let rows = '';
+    data.sets.forEach((s, i) => {
+        const rFilled = s.reps !== '' ? ' filled' : '';
+        const cFilled = s.charge !== '' ? ' filled' : '';
+        const tFilled = s.repos !== '' ? ' filled' : '';
+        const isDone = s.done === true;
+        rows += `<tr${isDone ? ' class="series-done"' : ''}>
+            <td>${i + 1}</td>
+            <td><input type="number" inputmode="numeric" class="series-input${rFilled}" data-series-id="${esc(exId)}-${i}-reps"
+                placeholder="—" value="${esc(s.reps)}" min="0"
+                oninput="saveSeriesField('${esc(exId)}',${i},'reps',this.value)"></td>
+            <td><input type="number" inputmode="decimal" class="series-input${cFilled}" data-series-id="${esc(exId)}-${i}-charge"
+                placeholder="—" value="${esc(s.charge)}" min="0" step="0.5"
+                oninput="saveSeriesField('${esc(exId)}',${i},'charge',this.value)"></td>
+            <td><input type="number" inputmode="numeric" class="series-input${tFilled}" data-series-id="${esc(exId)}-${i}-repos"
+                placeholder="—" value="${esc(s.repos)}" min="0" step="5"
+                oninput="saveSeriesField('${esc(exId)}',${i},'repos',this.value)"></td>
+            <td style="white-space:nowrap">
+                <button class="series-validate-btn${isDone ? ' done' : ''}" onclick="validateSeries('${esc(exId)}',${i})" title="${isDone ? 'Annuler' : 'Valider la série'}">✓</button>
+                <button class="series-row-remove" onclick="removeSeriesRow('${esc(exId)}',${i})" title="Supprimer">×</button>
+            </td>
+        </tr>`;
+    });
+
+    let lastHtml = '';
+    if (last) {
+        if (last.legacy) {
+            lastHtml = `<div class="series-last-session">📅 Dernière séance <span style="font-size:10px">(${last.date})</span> : ${esc(last.legacy)}</div>`;
+        } else if (last.data && last.data.sets) {
+            const summary = last.data.sets.map((s, i) =>
+                `S${i+1}: ${s.reps || '—'} reps × ${s.charge || '—'} kg, repos ${s.repos || '—'}s`
+            ).join(' | ');
+            lastHtml = `<div class="series-last-session">📅 <b>Dernière séance</b> <span style="font-size:10px">(${last.date})</span><br>${esc(summary)}</div>`;
+        }
+    }
+
+    return `<div class="series-tracker" data-ex="${esc(exId)}" data-meta="${esc(meta)}">
+        <label class="series-tracker-label">📊 Suivi des séries</label>
+        <table class="series-table">
+            <thead><tr>
+                <th>#</th>
+                <th>Reps</th>
+                <th>Charge (kg)</th>
+                <th>Repos (s)</th>
+                <th></th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+        </table>
+        <button class="series-add-btn" onclick="addSeriesRow('${esc(exId)}')">＋ Ajouter une série</button>
+        <div class="rest-banner" data-ex="${esc(exId)}">
+            <div class="rest-banner-left">
+                <div class="rest-label">⏱ Temps de repos</div>
+                <div class="rest-serie-label"></div>
+            </div>
+            <div class="rest-countdown">00:00</div>
+            <button class="rest-skip-btn" onclick="skipRestTimer('${esc(exId)}')">Passer →</button>
+        </div>
+        ${lastHtml}
+    </div>`;
+}
+
+// BOOT
+init();
+</script>
+</body>
+</html>
+
+
+

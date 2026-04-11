@@ -1,0 +1,86 @@
+﻿798|fr26a0|Echauffement A|./assets/cat_mobility.png
+799|fr26a1|Presse a cuisses|./assets/cat_jambes_1775428794260.png
+800|fr26a2|Developpe couche halteres ou chest press|./assets/cat_bras_1775428814769.png
+801|fr26a3|Rowing assis poulie|./assets/cat_dos_1775428805135.png
+802|fr26a4|Hip thrust machine ou barre guidee|./assets/cat_jambes_1775428794260.png
+803|fr26a5|Tirage vertical|./assets/cat_dos_1775428805135.png
+804|fr26a6|Pallof press|./assets/cat_bras_1775428814769.png
+805|fr26a7|Cardio zone 2|./assets/cat_cardio_1775428827460.png
+815|fr26b0|Echauffement B|./assets/cat_mobilite_1775428838872.png
+816|fr26b1|Hack squat ou presse inclinee|./assets/cat_jambes_1775428794260.png
+817|fr26b2|Developpe incline machine ou halteres|./assets/cat_mobilite_1775428838872.png
+818|fr26b3|Rowing poitrine appuyee|./assets/cat_dos_1775428805135.png
+819|fr26b4|Leg curl assis ou couche|./assets/cat_jambes_1775428794260.png
+820|fr26b5|Split squat ou fente arriere legere|./assets/cat_jambes_1775428794260.png
+821|fr26b6|Elevations laterales|./assets/cat_mobilite_1775428838872.png
+822|fr26b7|Planche laterale|./assets/cat_dos_1775428805135.png
+823|fr26b8|Intervalles controles|./assets/cat_cardio_1775428827460.png
+833|fr26c0|Echauffement C|./assets/cat_mobilite_1775428838872.png
+834|fr26c1|Goblet squat ou presse legere|./assets/cat_jambes_1775428794260.png
+835|fr26c2|Pompes|./assets/cat_bras_1775428814769.png
+836|fr26c3|Tractions assistees ou tirage vertical|./assets/cat_dos_1775428805135.png
+837|fr26c4|Rowing poulie basse|./assets/cat_dos_1775428805135.png
+838|fr26c5|Pull-through poulie ou extension 45 degres legere|./assets/cat_jambes_1775428794260.png
+839|fr26c6|Curl biceps + extension triceps poulie|./assets/cat_bras_1775428814769.png
+840|fr26c7|Cardio progressif|./assets/cat_cardio_1775428827460.png
+841|fr26c8|Routine tendon / dos|./assets/cat_dos_1775428805135.png
+859|fb1e1|Squat haltères / barre|./assets/squat_illustration_1775427762074.png
+865|fb1e2|Soulevé de terre roumain|./assets/deadlift_illustration_1775427773855.png
+871|fb1e3|Leg press|./assets/cat_jambes_1775428794260.png
+876|fb1e4|Tirage horizontal câble / haltère|./assets/cat_dos_1775428805135.png
+880|fb1e5|Pont fessier unilatéral|https://placehold.co/600x400/0891b2/FFFFFF.png?text=Pont+Fessier
+885|fb1e6|Gainage planche avec variation|./assets/plank_illustration_1775427797986.png
+897|fb2e1|Développé couché haltères / barre|./assets/benchpress_illustration_1775427787141.png
+902|fb2e2|Tractions / Lat pulldown|https://placehold.co/600x400/0891b2/FFFFFF.png?text=Tractions
+907|fb2e3|Développé militaire haltères|./assets/cat_bras_1775428814769.png
+912|fb2e4|Rowing haltère unilatéral|./assets/cat_dos_1775428805135.png
+916|fb2e5|Dips ou Pushdown triceps|https://placehold.co/600x400/0891b2/FFFFFF.png?text=Dips
+920|fb2e6|Curl biceps haltères alternés|./assets/cat_bras_1775428814769.png
+932|fb3e1|Squat bulgare|./assets/squat_illustration_1775427762074.png
+938|fb3e2|Extension genou excentrique — droit fémoral|./assets/cat_bras_1775428814769.png
+944|fb3e3|Hip thrust|./assets/cat_jambes_1775428794260.png
+949|fb3e4|Bird-dog lent|./assets/cat_dos_1775428805135.png
+954|fb3e5|Gainage latéral avec rotation|./assets/cat_dos_1775428805135.png
+958|fb3e6|Étirement actif psoas-quadriceps|./assets/cat_jambes_1775428794260.png
+980|rf1e1|Isométrique mural|./assets/cat_legs.png
+984|rf1e2|Isométrique flexion hanche|./assets/cat_jambes_1775428794260.png
+988|rf1e3|Pont fessier|./assets/cat_jambes_1775428794260.png
+991|rf1e4|Gainage ventral|./assets/cat_jambes_1775428794260.png
+1001|rf2e1|Squat partiel|./assets/cat_jambes_1775428794260.png
+1005|rf2e2|Fente avant statique|./assets/cat_jambes_1775428794260.png
+1009|rf2e3|Extension genou excentrique|./assets/cat_jambes_1775428794260.png
+1020|rf3e1|Squat bulgare|./assets/cat_jambes_1775428794260.png
+1024|rf3e2|Reverse Nordic Curl|./assets/cat_bras_1775428814769.png
+1028|rf3e3|Sauts sur place|./assets/cat_cardio_1775428827460.png
+1039|rf4e1|Conduite de balle & passes courtes|./assets/cat_mobilite_1775428838872.png
+1042|rf4e2|Frappes progressives|./assets/cat_mobilite_1775428838872.png
+1062|rj1e1|Squat goblet|./assets/squat_illustration_1775427762074.png
+1066|rj1e2|Soulevé de terre jambes tendues|./assets/cat_jambes_1775428794260.png
+1069|rj1e3|Fente marchée|./assets/cat_jambes_1775428794260.png
+1079|rj2e1|Squat complet|./assets/cat_jambes_1775428794260.png
+1083|rj2e2|Leg press|./assets/cat_jambes_1775428794260.png
+1086|rj2e3|Hip thrust|./assets/cat_mobilite_1775428838872.png
+1097|rj3e1|Squat lourd|./assets/cat_jambes_1775428794260.png
+1100|rj3e2|Soulevé de terre conventionnel|./assets/cat_dos_1775428805135.png
+1120|cg1e1|Planche frontale|./assets/plank_illustration_1775427797986.png
+1123|cg1e2|Planche latérale|./assets/cat_core_1775428850418.png
+1126|cg1e3|Pont fessier|./assets/cat_jambes_1775428794260.png
+1129|cg1e4|Bird-dog|./assets/cat_dos_1775428805135.png
+1139|cg2e1|Dead bug|./assets/cat_bras_1775428814769.png
+1142|cg2e2|Mountain climber|./assets/cat_bras_1775428814769.png
+1153|cg3e1|Pallof press|./assets/cat_core_1775428850418.png
+1172|mob1e1|Étirement psoas-iliaque|./assets/cat_mobility.png
+1175|mob1e2|Rotations hanche (couché)|./assets/cat_jambes_1775428794260.png
+1178|mob1e3|Mobilité thoracique|./assets/cat_mobilite_1775428838872.png
+1181|mob1e4|Squat profond assisté|./assets/cat_jambes_1775428794260.png
+1200|hc1e1|Pompes|./assets/cat_arms.png
+1203|hc1e2|Tirage horizontal (élastique ou câble)|./assets/cat_dos_1775428805135.png
+1206|hc1e3|Élévations latérales|./assets/cat_bras_1775428814769.png
+1217|hc2e1|Développé couché|./assets/cat_bras_1775428814769.png
+1221|hc2e2|Tractions / Lat pulldown|./assets/cat_dos_1775428805135.png
+1224|hc2e3|Curl biceps|./assets/cat_bras_1775428814769.png
+1234|hc3e1|Développé couché lourd|./assets/cat_bras_1775428814769.png
+1253|hi1e1|Burpees|./assets/cat_cardio.png
+1257|hi1e2|Mountain Climber|./assets/cat_core_1775428850418.png
+1260|hi1e3|Jump squats|./assets/cat_jambes_1775428794260.png
+1270|hi2e1|Tabata — Burpees|./assets/cat_cardio_1775428827460.png
